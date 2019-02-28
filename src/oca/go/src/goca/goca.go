@@ -27,44 +27,71 @@ import (
 	"github.com/kolo/xmlrpc"
 )
 
-var (
-	client *oneClient
-)
-
 // OneConfig contains the information to communicate with OpenNebula
 type OneConfig struct {
 	// Token is the authentication string. In the format of <user>:<password>
 	Token string
 
-	// XmlrpcURL contains OpenNebula's XML-RPC API endpoint. Defaults to
+	// Endpoint contains OpenNebula's XML-RPC API endpoint. Defaults to
 	// http://localhost:2633/RPC2
-	XmlrpcURL string
+	Endpoint string
 }
 
-type oneClient struct {
-	url               string
-	token             string
-	httpClient        *http.Client
+// RPCCaller is the interface to satisfy in order to be usable by the controller
+type RPCCaller interface {
+	Call(method string, args ...interface{}) (*Response, error)
+	EndpointCall(url, method string, args ...interface{}) (*Response, error)
 }
 
-type response struct {
+// Client is a basic XML-RPC client implementing RPCCaller
+type Client struct {
+	url        string
+	token      string
+	httpClient *http.Client
+}
+
+// Controller is the controller used to make requets on various entities
+type Controller struct {
+	Client RPCCaller
+}
+
+// entitiesController is a controller for entitites
+type entitiesController struct {
+	c *Controller
+}
+
+// entityController is a controller for an entity
+type entityController struct {
+	c  *Controller
+	ID uint
+}
+
+// entityControllerName is a controller for an entity
+type entityNameController struct {
+	c    *Controller
+	Name string
+}
+
+// subEntityController is a controller for a sub entity
+type subEntityController struct {
+	c        *Controller
+	entityID uint
+	ID       uint
+}
+
+type Response struct {
 	status  bool
 	body    string
 	bodyInt int
 }
 
-// Initializes the client variable, used as a singleton
-func init() {
-	SetClient(NewConfig("", "", ""))
-}
-
 // NewConfig returns a new OneConfig object with the specified user, password,
-// and xmlrpcURL
-func NewConfig(user string, password string, xmlrpcURL string) OneConfig {
+// and endpoint
+func NewConfig(user string, password string, endpoint string) OneConfig {
 	var authToken string
 	var oneAuthPath string
 
-	oneXmlrpc := xmlrpcURL
+	oneXmlrpc := endpoint
 
 	if user == "" && password == "" {
 		oneAuthPath = os.Getenv("ONE_AUTH")
@@ -90,26 +117,31 @@ func NewConfig(user string, password string, xmlrpcURL string) OneConfig {
 	}
 
 	config := OneConfig{
-		Token:     authToken,
-		XmlrpcURL: oneXmlrpc,
+		Token:    authToken,
+		Endpoint: oneXmlrpc,
 	}
 
 	return config
 }
 
-// SetClient assigns a value to the client variable
-func SetClient(conf OneConfig) {
+func NewClient(conf OneConfig) *Client {
+	return &Client{
+		url:        conf.Endpoint,
+		token:      conf.Token,
+		httpClient: &http.Client{},
+	}
+}
 
-	client = &oneClient{
-		url:               conf.XmlrpcURL,
-		token:             conf.Token,
-		httpClient:        &http.Client{},
+// NewClient return a new one client
+func NewController(c RPCCaller) *Controller {
+	return &Controller{
+		Client: c,
 	}
 }
 
 // SystemVersion returns the current OpenNebula Version
-func SystemVersion() (string, error) {
-	response, err := client.Call("one.system.version")
+func (c *Controller) SystemVersion() (string, error) {
+	response, err := c.Client.Call("one.system.version")
 	if err != nil {
 		return "", err
 	}
@@ -118,8 +150,8 @@ func SystemVersion() (string, error) {
 }
 
 // SystemConfig returns the current OpenNebula config
-func SystemConfig() (string, error) {
-	response, err := client.Call("one.system.config")
+func (c *Controller) SystemConfig() (string, error) {
+	response, err := c.Client.Call("one.system.config")
 	if err != nil {
 		return "", err
 	}
@@ -128,11 +160,11 @@ func SystemConfig() (string, error) {
 }
 
 // Call is an XML-RPC wrapper. It returns a pointer to response and an error.
-func (c *oneClient) Call(method string, args ...interface{}) (*response, error) {
-	return c.endpointCall(c.url, method, args...)
+func (c *Client) Call(method string, args ...interface{}) (*Response, error) {
+	return c.EndpointCall(c.url, method, args...)
 }
 
-func (c *oneClient) endpointCall(url string, method string, args ...interface{}) (*response, error) {
+func (c *Client) EndpointCall(url string, method string, args ...interface{}) (*Response, error) {
 	var (
 		ok bool
 
@@ -209,8 +241,8 @@ func (c *oneClient) endpointCall(url string, method string, args ...interface{})
 	if ok == false {
 		bodyInt, ok = result[1].(int64)
 		if ok == false {
-            return nil,
-                &ClientError{ClientRespONeParse, "index 1: int or string expected", resp, nil}
+			return nil,
+				&ClientError{ClientRespONeParse, "index 1: int or string expected", resp, nil}
 		}
 	}
 
@@ -227,17 +259,17 @@ func (c *oneClient) endpointCall(url string, method string, args ...interface{})
 		}
 	}
 
-	r := &response{status, body, int(bodyInt)}
+	r := &Response{status, body, int(bodyInt)}
 
 	return r, nil
 }
 
 // Body accesses the body of the response
-func (r *response) Body() string {
+func (r *Response) Body() string {
 	return r.body
 }
 
 // BodyInt accesses the body of the response, if it's an int.
-func (r *response) BodyInt() int {
+func (r *Response) BodyInt() int {
 	return r.bodyInt
 }
