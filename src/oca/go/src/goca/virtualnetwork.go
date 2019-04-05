@@ -56,7 +56,7 @@ type VirtualNetwork struct {
 	Template             virtualNetworkTemplate `xml:"TEMPLATE"`
 
 	// Variable parts between one.vnpool.info and one.vn.info
-	ARs  []virtualNetworkAR `xml:"AR_POOL>AR"`
+	ARs  []VirtualNetworkAR `xml:"AR_POOL>AR"`
 	Lock *Lock              `xml:"LOCK"`
 }
 
@@ -64,7 +64,7 @@ type virtualNetworkTemplate struct {
 	Dynamic unmatchedTagsSlice `xml:",any"`
 }
 
-type virtualNetworkAR struct {
+type VirtualNetworkAR struct {
 	ID                string  `xml:"AR_ID"`
 	GlobalPrefix      string  `xml:"GLOBAL_PREFIX"` // minOccurs=0
 	IP                string  `xml:"IP"`            // minOccurs=0
