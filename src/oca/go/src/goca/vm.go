@@ -116,7 +116,7 @@ type vmTemplate struct {
 	Graphics           *vmGraphics           `xml:"GRAPHICS"`
 	OS                 *vmOS                 `xml:"OS"`
 	Snapshots          []VMSnapshot          `xml:"SNAPSHOT"`
-	SecurityGroupRules []vmSecurityGroupRule `xml:"SECURITY_GROUP_RULE"`
+	SecurityGroupRules []VMSecurityGroupRule `xml:"SECURITY_GROUP_RULE"`
 	Dynamic            unmatchedTagsSlice    `xml:",any"`
 }
 
@@ -161,8 +161,8 @@ type vmOS struct {
 	Boot string `xml:"BOOT"`
 }
 
-type vmSecurityGroupRule struct {
-	securityGroupRule
+type VMSecurityGroupRule struct {
+	SecurityGroupRule
 	SecurityGroup string `xml:"SECURITY_GROUP_NAME"`
 }
 
