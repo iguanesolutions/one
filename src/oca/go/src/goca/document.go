@@ -47,7 +47,7 @@ type Document struct {
 }
 
 type documentTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Dynamic DynTemplate `xml:",any"`
 }
 
 // Documents returns a Documents controller

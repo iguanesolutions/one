@@ -61,7 +61,7 @@ type VirtualNetwork struct {
 }
 
 type virtualNetworkTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Dynamic DynTemplate `xml:",any"`
 }
 
 type VirtualNetworkAR struct {

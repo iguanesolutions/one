@@ -25,7 +25,7 @@ func createTemplate(t *testing.T) (*Template, uint) {
 	templateName := GenName("template")
 
 	// Create template
-	tpl := NewTemplateBuilder()
+	tpl := NewDynTemplate()
 
 	tpl.AddValue("name", templateName)
 	tpl.AddValue("cpu", 1)
@@ -84,7 +84,7 @@ func TestTemplateInstantiate(t *testing.T) {
 	templateName := GenName("template")
 
 	// Create template
-	tpl := NewTemplateBuilder()
+	tpl := NewDynTemplate()
 
 	tpl.AddValue("name", templateName)
 	tpl.AddValue("cpu", 1)
@@ -121,7 +121,7 @@ func TestTemplateUpdate(t *testing.T) {
 	template, _ := createTemplate(t)
 	templateCtrl := testCtrl.Template(template.ID)
 
-	tpl := NewTemplateBuilder()
+	tpl := NewDynTemplate()
 	tpl.AddValue("A", "B")
 
 	// Update
@@ -132,11 +132,11 @@ func TestTemplateUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	val, err := template.Template.Dynamic.GetContentByName("A")
+	val, err := template.Template.Dynamic.GetPair("A")
 	if err != nil {
 		t.Errorf("Test failed, can't retrieve '%s', error: %s", "A", err.Error())
 	} else {
-		if val != "B" {
+		if val.Value != "B" {
 			t.Errorf("Expecting A=B")
 		}
 	}

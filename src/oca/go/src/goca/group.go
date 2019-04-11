@@ -48,7 +48,7 @@ type Group struct {
 }
 
 type groupTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Dynamic DynTemplate `xml:",any"`
 }
 
 // Groups returns a Groups controller.

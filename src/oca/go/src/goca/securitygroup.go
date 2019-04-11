@@ -52,7 +52,7 @@ type SecurityGroup struct {
 type securityGroupTemplate struct {
 	Description string              `xml:"DESCRIPTION"`
 	Rules       []SecurityGroupRule `xml:"RULE"`
-	Dynamic     unmatchedTagsSlice  `xml:",any"`
+	Dynamic     DynTemplate         `xml:",any"`
 }
 
 type SecurityGroupRule struct {

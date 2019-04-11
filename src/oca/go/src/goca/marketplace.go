@@ -52,7 +52,7 @@ type MarketPlace struct {
 
 // MarketPlaceTemplate represent the template part of the MarketPlace
 type marketPlaceTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Dynamic DynTemplate `xml:",any"`
 }
 
 // MarketPlaces returns a MarketPlaces controller

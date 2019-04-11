@@ -35,7 +35,7 @@ var _ = Suite(&VMSuite{})
 
 func (s *VMSuite) SetUpSuite(c *C) {
 	// Create template
-	tpl := NewTemplateBuilder()
+	tpl := NewDynTemplate()
 
 	tpl.AddValue("NAME", GenName("VMSuite-template"))
 	tpl.AddValue("CPU", 1)
@@ -135,8 +135,9 @@ func (s *VMSuite) TestVMUpdate(c *C) {
 	vm, err := vmC.Info()
 	c.Assert(err, IsNil)
 
-	val := vm.UserTemplate.Dynamic.GetContentByName("A")
-	c.Assert(val, Equals, "B")
+	pair, err := vm.UserTemplate.Dynamic.GetPair("A")
+	c.Assert(err, IsNil)
+	c.Assert(pair.Value, Equals, "B")
 }
 
 // TODO: Hosts

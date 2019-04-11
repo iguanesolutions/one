@@ -60,7 +60,7 @@ type MarketPlaceApp struct {
 }
 
 type marketPlaceAppTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:,any`
+	Dynamic DynTemplate `xml:,any`
 }
 
 // MarketPlaceApps returns a MarketPlaceApps controller

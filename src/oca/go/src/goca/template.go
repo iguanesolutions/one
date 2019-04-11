@@ -48,40 +48,19 @@ type Template struct {
 
 // templateTemplate represent the template part of the OpenNebula Template
 type templateTemplate struct {
-	CPU        float64             `xml:"CPU"`
-	Memory     int                 `xml:"MEMORY"`
-	Context    *templateContext    `xml:"CONTEXT"`
-	Disk       []templateDisk      `xml:"DISK"`
-	Graphics   *templateGraphics   `xml:"GRAPHICS"`
-	NICDefault *templateNicDefault `xml:"NIC_DEFAULT"`
-	OS         *templateOS         `xml:"OS"`
-	UserInputs templateUserInputs  `xml:"USER_INPUTS"`
-	Dynamic    unmatchedTagsSlice  `xml:",any"`
+	CPU     float64          `xml:"CPU"`
+	Memory  int              `xml:"MEMORY"`
+	Context *templateContext `xml:"CONTEXT"`
+	Disk    []templateDisk   `xml:"DISK"`
+	Dynamic DynTemplate      `xml:",any"`
 }
 
 type templateContext struct {
-	Dynamic unmatchedTagsMap `xml:",any"`
+	Dynamic DynTemplate `xml:",any"`
 }
 
 type templateDisk struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateGraphics struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateUserInputs struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateNicDefault struct {
-	Model string `xml:"MODEL"`
-}
-
-type templateOS struct {
-	Arch string `xml:"ARCH"`
-	Boot string `xml:"BOOT"`
+	Dynamic DynTemplateVector `xml:",any"`
 }
 
 // Templates returns a Templates controller.
