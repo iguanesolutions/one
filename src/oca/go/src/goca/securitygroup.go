@@ -71,10 +71,10 @@ func (c *Controller) SecurityGroup(id uint) *SecurityGroupController {
 }
 
 // SecurityGroupByName returns a SecurityGroup by Name
-func (c *Controller) SecurityGroupByName(name string, args ...int) (uint, error) {
+func (c *Controller) SecurityGroupByName(name string, filter *Filter) (uint, error) {
 	var id uint
 
-	secgroupPool, err := (&SecurityGroupsController{c}).Info(args...)
+	secgroupPool, err := (&SecurityGroupsController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -99,27 +99,12 @@ func (c *Controller) SecurityGroupByName(name string, args ...int) (uint, error)
 
 // Info returns a security group pool. A connection to OpenNebula is
 // performed.
-func (sc *SecurityGroupsController) Info(args ...int) (*SecurityGroupPool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 1:
-		who = args[0]
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (sc *SecurityGroupsController) Info(filter *Filter) (*SecurityGroupPool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := sc.c.Client.Call("one.secgrouppool.info", who, start, end)
+	response, err := sc.c.Client.Call("one.secgrouppool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}

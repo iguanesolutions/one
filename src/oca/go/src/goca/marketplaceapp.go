@@ -74,10 +74,10 @@ func (c *Controller) MarketPlaceApp(id uint) *MarketPlaceAppController {
 }
 
 // MarketPlaceAppByName returns a MarketPlace ID from name
-func (c *Controller) MarketPlaceAppByName(name string, args ...int) (uint, error) {
+func (c *Controller) MarketPlaceAppByName(name string, filter *Filter) (uint, error) {
 	var id uint
 
-	marketAppPool, err := (&MarketPlaceAppsController{c}).Info(args...)
+	marketAppPool, err := (&MarketPlaceAppsController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -102,27 +102,12 @@ func (c *Controller) MarketPlaceAppByName(name string, args ...int) (uint, error
 
 // Info returns a marketplace app pool. A connection to OpenNebula is
 // performed.
-func (mc *MarketPlaceAppsController) Info(args ...int) (*MarketPlaceAppPool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 1:
-		who = args[0]
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (mc *MarketPlaceAppsController) Info(filter *Filter) (*MarketPlaceAppPool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := mc.c.Client.Call("one.marketapppool.info", who, start, end)
+	response, err := mc.c.Client.Call("one.marketapppool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}

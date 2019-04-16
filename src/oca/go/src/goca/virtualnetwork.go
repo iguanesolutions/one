@@ -112,10 +112,10 @@ func (c *Controller) VirtualNetwork(id uint) *VirtualNetworkController {
 }
 
 // VirtualNetworkByName returns a VirtualNetwork ID from name
-func (c *Controller) VirtualNetworkByName(name string, args ...int) (uint, error) {
+func (c *Controller) VirtualNetworkByName(name string, filter *Filter) (uint, error) {
 	var id uint
 
-	virtualNetworkPool, err := (&VirtualNetworksController{c}).Info(args...)
+	virtualNetworkPool, err := (&VirtualNetworksController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -139,27 +139,12 @@ func (c *Controller) VirtualNetworkByName(name string, args ...int) (uint, error
 }
 
 // Info returns a virtualnetwork pool.
-func (vc *VirtualNetworksController) Info(args ...int) (*VirtualNetworkPool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 1:
-		who = args[0]
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (vc *VirtualNetworksController) Info(filter *Filter) (*VirtualNetworkPool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := vc.c.Client.Call("one.vnpool.info", who, start, end)
+	response, err := vc.c.Client.Call("one.vnpool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}

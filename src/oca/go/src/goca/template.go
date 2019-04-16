@@ -74,10 +74,10 @@ func (c *Controller) Template(id uint) *TemplateController {
 }
 
 // TemplateByName returns a Template by Name
-func (c *Controller) TemplateByName(name string, args ...int) (uint, error) {
+func (c *Controller) TemplateByName(name string, filter *Filter) (uint, error) {
 	var id uint
 
-	templatePool, err := (&TemplatesController{c}).Info(args...)
+	templatePool, err := (&TemplatesController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -102,23 +102,12 @@ func (c *Controller) TemplateByName(name string, args ...int) (uint, error) {
 
 // Info returns a template pool. A connection to OpenNebula is
 // performed.
-func (tc *TemplatesController) Info(args ...int) (*TemplatePool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (tc *TemplatesController) Info(filter *Filter) (*TemplatePool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := tc.c.Client.Call("one.templatepool.info", who, start, end)
+	response, err := tc.c.Client.Call("one.templatepool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}

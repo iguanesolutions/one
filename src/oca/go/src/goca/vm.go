@@ -579,10 +579,10 @@ func (vc *VMController) Disk(id uint) *VMDiskController {
 }
 
 // VMByName returns VM ID from name
-func (c *Controller) VMByName(name string, args ...int) (uint, error) {
+func (c *Controller) VMByName(name string, f VMFilterer) (uint, error) {
 	var id uint
 
-	vmPool, err := (&VMsController{c}).Info(args...)
+	vmPool, err := (&VMsController{c}).Info(f)
 	if err != nil {
 		return 0, err
 	}
@@ -606,35 +606,12 @@ func (c *Controller) VMByName(name string, args ...int) (uint, error) {
 }
 
 // Info returns a new VM pool. It accepts the scope of the query.
-func (vc *VMsController) Info(args ...int) (*VMPool, error) {
-	var who, start, end, state int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-		state = -1
-	case 1:
-		who = args[0]
-		start = -1
-		end = -1
-		state = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-		state = -1
-	case 4:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-		state = args[3]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (vc *VMsController) Info(filter VMFilterer) (*VMPool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := vc.c.Client.Call("one.vmpool.info", who, start, end, state)
+	response, err := vc.c.Client.Call("one.vmpool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}
@@ -649,12 +626,17 @@ func (vc *VMsController) Info(args ...int) (*VMPool, error) {
 }
 
 // InfoExtended connects to OpenNebula and fetches the whole VM_POOL information
-func (vc *VMsController) InfoExtended(filterFlag, startID, endID, state int) (*VMPool, error) {
-	response, err := vc.c.Client.Call("one.vmpool.infoextended", filterFlag,
-		startID, endID, state)
+func (vc *VMsController) InfoExtended(filter VMFilterer) (*VMPool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
+	}
+
+	params := filter.ToArgs()
+	response, err := vc.c.Client.Call("one.vmpool.infoextended", params...)
 	if err != nil {
 		return nil, err
 	}
+
 	vmPool := &VMPool{}
 	err = xml.Unmarshal([]byte(response.Body()), vmPool)
 	if err != nil {

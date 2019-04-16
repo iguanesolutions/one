@@ -65,10 +65,10 @@ func (c *Controller) VirtualRouter(id uint) *VirtualRouterController {
 }
 
 // VirtualRouterByName returns a VirtualRouter By name
-func (c *Controller) VirtualRouterByName(name string, args ...int) (uint, error) {
+func (c *Controller) VirtualRouterByName(name string, filter *Filter) (uint, error) {
 	var id uint
 
-	vrouterPool, err := (&VirtualRoutersController{c}).Info(args...)
+	vrouterPool, err := (&VirtualRoutersController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -92,23 +92,12 @@ func (c *Controller) VirtualRouterByName(name string, args ...int) (uint, error)
 
 // Info returns a virtual router pool. A connection to OpenNebula is
 // performed.
-func (vc *VirtualRoutersController) Info(args ...int) (*VirtualRouterPool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (vc *VirtualRoutersController) Info(filter *Filter) (*VirtualRouterPool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := vc.c.Client.Call("one.vrouterpool.info", who, start, end)
+	response, err := vc.c.Client.Call("one.vrouterpool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}

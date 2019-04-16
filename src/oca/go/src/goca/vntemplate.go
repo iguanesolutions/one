@@ -64,10 +64,10 @@ func (c *Controller) VNTemplate(id uint) *VNTemplateController {
 }
 
 // VNTemplateByName returns a VNTemplate id from name
-func (c *Controller) VNTemplateByName(name string) (uint, error) {
+func (c *Controller) VNTemplateByName(name string, filter *Filter) (uint, error) {
 	var id uint
 
-	vnTemplatePool, err := (&VNTemplatesController{c}).Info()
+	vnTemplatePool, err := (&VNTemplatesController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -92,23 +92,12 @@ func (c *Controller) VNTemplateByName(name string) (uint, error) {
 
 // Info returns a vntemplate pool. A connection to OpenNebula is
 // performed.
-func (vc *VNTemplatesController) Info(args ...int) (*VNTemplatePool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (vc *VNTemplatesController) Info(filter *Filter) (*VNTemplatePool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := vc.c.Client.Call("one.vntemplatepool.info", who, start, end)
+	response, err := vc.c.Client.Call("one.vntemplatepool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}

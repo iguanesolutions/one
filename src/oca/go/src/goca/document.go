@@ -61,10 +61,10 @@ func (c *Controller) Document(id uint) *DocumentController {
 }
 
 // DocumentByName returns a Document ID from name
-func (c *Controller) DocumentByName(name string, documentType int, args ...int) (uint, error) {
+func (c *Controller) DocumentByName(name string, documentType int, filter *DocumentFilter) (uint, error) {
 	var id uint
 
-	documentPool, err := (&DocumentsController{c}).Info(documentType, args...)
+	documentPool, err := (&DocumentsController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -89,27 +89,12 @@ func (c *Controller) DocumentByName(name string, documentType int, args ...int) 
 
 // Info returns a document pool. A connection to OpenNebula is
 // performed.
-func (dc *DocumentsController) Info(documentType int, args ...int) (*DocumentPool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 1:
-		who = args[0]
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (dc *DocumentsController) Info(filter *DocumentFilter) (*DocumentPool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := dc.c.Client.Call("one.documentpool.info", who, start, end, documentType)
+	response, err := dc.c.Client.Call("one.documentpool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}

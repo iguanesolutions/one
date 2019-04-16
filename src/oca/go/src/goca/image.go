@@ -150,10 +150,10 @@ func (ic *ImageController) Snapshot(id uint) *ImageSnapshotController {
 }
 
 // ImageByName returns an Image ID from name
-func (c *Controller) ImageByName(name string, args ...int) (uint, error) {
+func (c *Controller) ImageByName(name string, filter *Filter) (uint, error) {
 	var id uint
 
-	imagePool, err := (&ImagesController{c}).Info(args...)
+	imagePool, err := (&ImagesController{c}).Info(filter)
 	if err != nil {
 		return 0, err
 	}
@@ -177,23 +177,12 @@ func (c *Controller) ImageByName(name string, args ...int) (uint, error) {
 }
 
 // Info returns a new image pool. It accepts the scope of the query.
-func (ic *ImagesController) Info(args ...int) (*ImagePool, error) {
-	var who, start, end int
-
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+func (ic *ImagesController) Info(filter *Filter) (*ImagePool, error) {
+	if filter == nil {
+		return nil, errors.New("you must pass a filter as a parameter")
 	}
 
-	response, err := ic.c.Client.Call("one.imagepool.info", who, start, end)
+	response, err := ic.c.Client.Call("one.imagepool.info", filter.ToArgs()...)
 	if err != nil {
 		return nil, err
 	}
