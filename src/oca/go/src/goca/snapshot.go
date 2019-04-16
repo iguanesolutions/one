@@ -45,12 +45,12 @@ type VMSnapshot struct {
 	Time         string `xml:"TIME"`
 }
 
-type vmHistoryRecordSnapshot struct {
+type VMHistoryRecordSnapshot struct {
 	ImageSnapshot
 	DiskID int `xml:"DISK_ID"`
 }
 
-type vmMonitoringSnapshotSize struct {
+type VMMonitoringSnapshotSize struct {
 	DiskID int `xml:"DISK_ID"`
 	Size   int `xml:"SIZE"`
 }
