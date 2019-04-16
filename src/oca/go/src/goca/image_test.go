@@ -77,7 +77,8 @@ func TestImage(t *testing.T) {
 	// Get image by Name
 	name := image.Name
 
-	id, err := testCtrl.ImageByName(name)
+	filter := NewFilter()
+	id, err := testCtrl.ImageByName(name, &filter)
 	if err != nil {
 		t.Fatal(err)
 	}

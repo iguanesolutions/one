@@ -42,8 +42,9 @@ func TestMarketplaceApp(t *testing.T){
 	    t.Fatalf("Test failed:\n" + err.Error())
 	}
 
-	WaitResource(func() bool{
-		id, _ := testCtrl.ImageByName("test_img_go")
+	WaitResource(func() bool {
+		filter := NewFilter()
+		id, _ := testCtrl.ImageByName("test_img_go", &filter)
 		img, _ := testCtrl.Image(id).Info()
 
 		state, _ := img.State()

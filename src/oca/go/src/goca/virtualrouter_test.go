@@ -160,7 +160,8 @@ func TestVirtualRouter(t *testing.T){
 	//Instantiate VirtualRouter
 	vrC.Instantiate(1, int(tmpl_id), "vr_test_go", false, "")
 
-	id, err := testCtrl.VMByName("vr_test_go")
+	filter := NewVMFilter()
+	id, err := testCtrl.VMByName("vr_test_go", &filter)
 	if err != nil {
 	    t.Fatal("Test failed:\n" + err.Error())
 	}
