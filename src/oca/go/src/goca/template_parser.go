@@ -151,6 +151,22 @@ func (t *DynTemplateVector) GetPair(key string) (*DynTemplatePair, error) {
 	return pair, nil
 }
 
+func (t *DynTemplate) getter(key string) (string, error) {
+	pair, err := t.GetPair(key)
+	if err != nil {
+		return "", err
+	}
+	return pair.Value, nil
+}
+
+func (t *DynTemplateVector) getterVec(key string) (string, error) {
+	pair, err := t.GetPair(key)
+	if err != nil {
+		return "", err
+	}
+	return pair.Value, nil
+}
+
 // GetVector retrieve a unique vector by key. Fail if not found or several instances
 func (t *DynTemplate) GetVector(key string) (*DynTemplateVector, error) {
 	var vector *DynTemplateVector
