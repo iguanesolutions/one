@@ -51,6 +51,7 @@ type VirtualRouter struct {
 
 // VirtualRouterTemplate represent the template part of the OpenNebula VirtualRouter
 type virtualRouterTemplate struct {
+	NICs    []NIC       `xml:"NIC"`
 	Dynamic DynTemplate `xml:",any"`
 }
 
@@ -191,8 +192,8 @@ func (vc *VirtualRouterController) Instantiate(number, tplid int, name string, h
 
 // AttachNic attaches a new network interface to the virtual router and the virtual machines.
 // * tpl: NIC template string
-func (vc *VirtualRouterController) AttachNic(tpl string) error {
-	_, err := vc.c.Client.Call("one.vrouter.attachnic", vc.ID, tpl)
+func (vc *VirtualRouterController) AttachNic(n *NIC) error {
+	_, err := vc.c.Client.Call("one.vrouter.attachnic", vc.ID, n.String())
 	return err
 }
 

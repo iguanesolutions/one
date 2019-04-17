@@ -109,7 +109,7 @@ type vmUserTemplate struct {
 type vmTemplate struct {
 	CPU                float64               `xml:"CPU"`
 	Memory             int                   `xml:"MEMORY"`
-	NICs               []VMNic               `xml:"NIC"`
+	NICs               []NIC                 `xml:"NIC"`
 	Context            *VMContext            `xml:"CONTEXT"`
 	Disks              []VMDisk              `xml:"DISK"`
 	Snapshots          []VMSnapshot          `xml:"SNAPSHOT"`
@@ -119,15 +119,6 @@ type vmTemplate struct {
 
 type VMContext struct {
 	Dynamic DynTemplate `xml:",any"`
-}
-
-type VMNic struct {
-	ID      int               `xml:"NIC_ID"`
-	Network string            `xml:"NETWORK"`
-	IP      string            `xml:"IP"`
-	MAC     string            `xml:"MAC"`
-	PhyDev  string            `xml:"PHYDEV"`
-	Dynamic DynTemplateVector `xml:",any"`
 }
 
 type VMDisk struct {
@@ -904,8 +895,8 @@ func (vc *VMController) Migrate(hostID uint, live, enforce bool, dsID uint, migr
 }
 
 // AttachNic attaches new network interface to the virtual machine
-func (vc *VMController) AttachNic(tpl string) error {
-	_, err := vc.c.Client.Call("one.vm.attachnic", vc.ID, tpl)
+func (vc *VMController) AttachNic(n *NIC) error {
+	_, err := vc.c.Client.Call("one.vm.attachnic", vc.ID, n.String())
 	return err
 }
 

@@ -84,7 +84,7 @@ func (t *DynTemplatePair) String() string {
 }
 
 func (t *DynTemplateVector) String() string {
-	s := fmt.Sprintf("%s=[\n", strings.ToUpper(t.key))
+	s := fmt.Sprintf("%s=[\n", strings.ToUpper(t.Key()))
 
 	endToken := ",\n"
 	for i, pair := range t.pairs {
