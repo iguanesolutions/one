@@ -17,6 +17,15 @@
 package goca
 
 // Permissions is associated to OpenNebula resources
+// * uu: USER USE bit.
+// * um: USER MANAGE bit.
+// * ua: USER ADMIN bit.
+// * gu: GROUP USE bit.
+// * gm: GROUP MANAGE bit.
+// * ga: GROUP ADMIN bit.
+// * ou: OTHER USE bit.
+// * om: OTHER MANAGE bit.
+// * oa: OTHER ADMIN bit.
 type Permissions struct {
 	OwnerU int `xml:"OWNER_U"`
 	OwnerM int `xml:"OWNER_M"`
@@ -27,6 +36,16 @@ type Permissions struct {
 	OtherU int `xml:"OTHER_U"`
 	OtherM int `xml:"OTHER_M"`
 	OtherA int `xml:"OTHER_A"`
+}
+
+// If a bit is set to -1, it will not change when calling Chmod
+func (p *Permissions) toArgs(id uint) []interface{} {
+	return []interface{}{
+		id,
+		p.OwnerU, p.OwnerM, p.OwnerA,
+		p.GroupU, p.GroupM, p.GroupA,
+		p.OtherU, p.OtherM, p.OtherA,
+	}
 }
 
 func (p *Permissions) String() string {
