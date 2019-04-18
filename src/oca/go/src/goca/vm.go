@@ -111,7 +111,7 @@ type vmTemplate struct {
 	Memory             int                   `xml:"MEMORY"`
 	NICs               []NIC                 `xml:"NIC"`
 	Context            *VMContext            `xml:"CONTEXT"`
-	Disks              []VMDisk              `xml:"DISK"`
+	Disks              []Disk                `xml:"DISK"`
 	Snapshots          []VMSnapshot          `xml:"SNAPSHOT"`
 	SecurityGroupRules []VMSecurityGroupRule `xml:"SECURITY_GROUP_RULE"`
 	Dynamic            DynTemplate           `xml:",any"`
@@ -119,17 +119,6 @@ type vmTemplate struct {
 
 type VMContext struct {
 	Dynamic DynTemplate `xml:",any"`
-}
-
-type VMDisk struct {
-	ID           int               `xml:"DISK_ID"`
-	Datastore    string            `xml:"DATASTORE"`
-	DiskType     string            `xml:"DISK_TYPE"`
-	Image        string            `xml:"IMAGE"`
-	Driver       string            `xml:"DRIVER"`
-	OriginalSize int               `xml:"ORIGINAL_SIZE"`
-	Size         int               `xml:"SIZE"`
-	Dynamic      DynTemplateVector `xml:",any"`
 }
 
 type VMSecurityGroupRule struct {
@@ -853,8 +842,8 @@ func (vc *VMDiskController) SnapshotRename(snapID int, newName string) error {
 // DiskAttach attach a new disk to the virtual machine. diskTemplate is a string containing
 // a single DISK vector attribute. Syntax can be the usual attribute=value or
 // XML
-func (vc *VMController) DiskAttach(diskTemplate string) error {
-	_, err := vc.c.Client.Call("one.vm.attach", vc.ID, diskTemplate)
+func (vc *VMController) DiskAttach(disk *Disk) error {
+	_, err := vc.c.Client.Call("one.vm.attach", vc.ID, disk.String())
 	return err
 }
 
