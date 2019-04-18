@@ -58,7 +58,8 @@ func TestTemplateCreateAndDelete(t *testing.T) {
 
 	// Get template by Name
 	name := template.Name
-	id, err := testCtrl.TemplateByName(name)
+	filter := NewFilter()
+	id, err := testCtrl.TemplateByName(name, &filter)
 	if err != nil {
 		t.Fatal(err)
 	}

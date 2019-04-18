@@ -59,7 +59,8 @@ func TestVirtualNetwork(t *testing.T) {
 	// Get virtual network by Name
 	name := vnet.Name
 
-	id, err := testCtrl.VirtualNetworkByName(name)
+	filter := NewFilter()
+	id, err := testCtrl.VirtualNetworkByName(name, &filter)
 	if err != nil {
 		t.Fatal(err)
 	}
