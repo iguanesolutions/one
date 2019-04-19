@@ -27,7 +27,6 @@ const (
 	NetworkMaskK    NicKeys = "NETWORK_MASK"
 	NetworkAddressK NicKeys = "NETWORK_ADDRESS"
 	PhyDevK         NicKeys = "PHYDEV"
-	PublicIPK       NicKeys = "PULIC_IP"
 	SecGroupsK      NicKeys = "SECURITY_GROUPS"
 	TargetK         NicKeys = "TARGET"
 	VlanIDK         NicKeys = "VLAN_ID"
