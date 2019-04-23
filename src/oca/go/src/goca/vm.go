@@ -110,15 +110,11 @@ type vmTemplate struct {
 	CPU                float64               `xml:"CPU"`
 	Memory             int                   `xml:"MEMORY"`
 	NICs               []NIC                 `xml:"NIC"`
-	Context            *VMContext            `xml:"CONTEXT"`
+	Context            *DynTemplateVector    `xml:"CONTEXT"`
 	Disks              []Disk                `xml:"DISK"`
 	Snapshots          []VMSnapshot          `xml:"SNAPSHOT"`
 	SecurityGroupRules []VMSecurityGroupRule `xml:"SECURITY_GROUP_RULE"`
 	Dynamic            DynTemplate           `xml:",any"`
-}
-
-type VMContext struct {
-	Dynamic DynTemplate `xml:",any"`
 }
 
 type VMSecurityGroupRule struct {

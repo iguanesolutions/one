@@ -48,15 +48,11 @@ type Template struct {
 
 // templateTemplate represent the template part of the OpenNebula Template
 type templateTemplate struct {
-	CPU     float64          `xml:"CPU"`
-	Memory  int              `xml:"MEMORY"`
-	Context *templateContext `xml:"CONTEXT"`
-	Disk    []templateDisk   `xml:"DISK"`
-	Dynamic DynTemplate      `xml:",any"`
-}
-
-type templateContext struct {
-	Dynamic DynTemplate `xml:",any"`
+	CPU     float64            `xml:"CPU"`
+	Memory  int                `xml:"MEMORY"`
+	Context *DynTemplateVector `xml:"CONTEXT"`
+	Disk    []templateDisk     `xml:"DISK"`
+	Dynamic DynTemplate        `xml:",any"`
 }
 
 type templateDisk struct {
