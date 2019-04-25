@@ -49,8 +49,8 @@ type VNTemplate struct {
 }
 
 type vnTemplateTemplate struct {
-	VNMad   string             `xml:"VN_MAD"`
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	VNMad   string          `xml:"VN_MAD"`
+	Dynamic DynamicTemplate `xml:",any"`
 }
 
 // VNTemplates returns a VNTemplates controller.

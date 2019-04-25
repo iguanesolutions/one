@@ -51,7 +51,8 @@ type zoneServer struct {
 }
 
 type zoneTemplate struct {
-	Endpoint string `xml:"ENDPOINT"`
+	Endpoint string          `xml:"ENDPOINT"`
+	Template DynamicTemplate `xml:",any"`
 }
 
 // ZoneServerRaftStatus contains the raft status datas of a server

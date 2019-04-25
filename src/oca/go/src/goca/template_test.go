@@ -25,11 +25,11 @@ func createTemplate(t *testing.T) (*Template, uint) {
 	templateName := GenName("template")
 
 	// Create template
-	tpl := NewTemplateBuilder()
+	tpl := NewDynamicTemplate()
 
-	tpl.AddValue("name", templateName)
-	tpl.AddValue("cpu", 1)
-	tpl.AddValue("memory", "64")
+	tpl.AddPair("name", templateName)
+	tpl.AddPair("cpu", 1)
+	tpl.AddPair("memory", "64")
 
 	id, err := testCtrl.Templates().Create(tpl.String())
 	if err != nil {
@@ -85,11 +85,11 @@ func TestTemplateInstantiate(t *testing.T) {
 	templateName := GenName("template")
 
 	// Create template
-	tpl := NewTemplateBuilder()
+	tpl := NewDynamicTemplate()
 
-	tpl.AddValue("name", templateName)
-	tpl.AddValue("cpu", 1)
-	tpl.AddValue("memory", "64")
+	tpl.AddPair("name", templateName)
+	tpl.AddPair("cpu", 1)
+	tpl.AddPair("memory", "64")
 
 	id, err := testCtrl.Templates().Create(tpl.String())
 	if err != nil {
@@ -100,7 +100,7 @@ func TestTemplateInstantiate(t *testing.T) {
 	templateC := testCtrl.Template(id)
 
 	// Instantiate(name string, pending bool, extra string) (uint, error)
-	vmid, err := templateC.Instantiate("", false, "", false)
+	vmid, err := templateC.Instantiate("", false, nil, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -122,8 +122,8 @@ func TestTemplateUpdate(t *testing.T) {
 	template, _ := createTemplate(t)
 	templateCtrl := testCtrl.Template(template.ID)
 
-	tpl := NewTemplateBuilder()
-	tpl.AddValue("A", "B")
+	tpl := NewDynamicTemplate()
+	tpl.AddPair("A", "B")
 
 	// Update
 	templateCtrl.Update(tpl.String(), 1)
@@ -133,11 +133,11 @@ func TestTemplateUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	val, err := template.Template.Dynamic.GetContentByName("A")
+	val, err := template.Template.Dynamic.GetPair("A")
 	if err != nil {
 		t.Errorf("Test failed, can't retrieve '%s', error: %s", "A", err.Error())
 	} else {
-		if val != "B" {
+		if val.Value != "B" {
 			t.Errorf("Expecting A=B")
 		}
 	}

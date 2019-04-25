@@ -53,7 +53,7 @@ type User struct {
 }
 
 type userTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Dynamic DynamicTemplate `xml:",any"`
 }
 
 type loginToken struct {

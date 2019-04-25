@@ -35,11 +35,11 @@ var _ = Suite(&VMSuite{})
 
 func (s *VMSuite) SetUpSuite(c *C) {
 	// Create template
-	tpl := NewTemplateBuilder()
+	tpl := NewDynamicTemplate()
 
-	tpl.AddValue("NAME", GenName("VMSuite-template"))
-	tpl.AddValue("CPU", 1)
-	tpl.AddValue("MEMORY", "64")
+	tpl.AddPair("NAME", GenName("VMSuite-template"))
+	tpl.AddPair("CPU", 1)
+	tpl.AddPair("MEMORY", "64")
 
 	templateID, err := testCtrl.Templates().Create(tpl.String())
 	c.Assert(err, IsNil)
@@ -57,7 +57,7 @@ func (s *VMSuite) SetUpSuite(c *C) {
 }
 
 func (s *VMSuite) SetUpTest(c *C) {
-	vmID, err := testCtrl.Template(s.templateID).Instantiate("", true, "", false)
+	vmID, err := testCtrl.Template(s.templateID).Instantiate("", true, nil, false)
 	c.Assert(err, IsNil)
 	s.vmID = vmID
 }
@@ -135,8 +135,9 @@ func (s *VMSuite) TestVMUpdate(c *C) {
 	vm, err := vmC.Info()
 	c.Assert(err, IsNil)
 
-	val := vm.UserTemplate.Dynamic.GetContentByName("A")
-	c.Assert(val, Equals, "B")
+	pair, err := vm.UserTemplate.Dynamic.GetPair("A")
+	c.Assert(err, IsNil)
+	c.Assert(pair.Value, Equals, "B")
 }
 
 // TODO: Hosts

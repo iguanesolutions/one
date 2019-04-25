@@ -45,7 +45,7 @@ type Vdc struct {
 }
 
 type vdcTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Dynamic DynamicTemplate `xml:",any"`
 }
 
 type vdcCluster struct {

@@ -34,30 +34,25 @@ type VirtualRouterPool struct {
 
 // VirtualRouter represents an OpenNebula VirtualRouter
 type VirtualRouter struct {
-	ID          uint                  `xml:"ID"`
-	UID         int                   `xml:"UID"`
-	GID         int                   `xml:"GID"`
-	UName       string                `xml:"UNAME"`
-	GName       string                `xml:"GNAME"`
-	Name        string                `xml:"NAME"`
-	LockInfos   *Lock                 `xml:"LOCK"`
-	Permissions *Permissions          `xml:"PERMISSIONS"`
-	Type        int                   `xml:"TYPE"`
-	DiskType    int                   `xml:"DISK_TYPE"`
-	Persistent  int                   `xml:"PERSISTENT"`
-	VMsID       []int                 `xml:"VMS>ID"`
-	Template    virtualRouterTemplate `xml:"TEMPLATE"`
+	ID          uint            `xml:"ID"`
+	UID         int             `xml:"UID"`
+	GID         int             `xml:"GID"`
+	UName       string          `xml:"UNAME"`
+	GName       string          `xml:"GNAME"`
+	Name        string          `xml:"NAME"`
+	LockInfos   *Lock           `xml:"LOCK"`
+	Permissions *Permissions    `xml:"PERMISSIONS"`
+	Type        int             `xml:"TYPE"`
+	DiskType    int             `xml:"DISK_TYPE"`
+	Persistent  int             `xml:"PERSISTENT"`
+	VMsID       []int           `xml:"VMS>ID"`
+	Template    vrouterTemplate `xml:"TEMPLATE"`
 }
 
 // VirtualRouterTemplate represent the template part of the OpenNebula VirtualRouter
-type virtualRouterTemplate struct {
-	NIC     []virtualRouterNIC `xml:"NIC"`
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type virtualRouterNIC struct {
-	NICID   int                `xml:"NIC_ID"`
-	Dynamic unmatchedTagsSlice `xml:",any"`
+type vrouterTemplate struct {
+	NICs    []NIC           `xml:"NIC"`
+	Dynamic DynamicTemplate `xml:",any"`
 }
 
 // VirtualRouters returns a VirtualRouters controller.
@@ -185,8 +180,12 @@ func (vc *VirtualRouterController) Delete() error {
 // * name: Name for the VM instances. If it is an empty string OpenNebula will set a default name. Wildcard %i can be used.
 // * hold: False to create the VM on pending (default), True to create it on hold.
 // * extra: A string containing an extra template to be merged with the one being instantiated. It can be empty. Syntax can be the usual attribute=value or XML.
-func (vc *VirtualRouterController) Instantiate(number, tplid int, name string, hold bool, extra string) (uint, error) {
-	response, err := vc.c.Client.Call("one.vrouter.instantiate", vc.ID, number, tplid, name, hold, extra)
+func (vc *VirtualRouterController) Instantiate(number, tplid int, name string, hold bool, extra *VMTemplateBuilder) (uint, error) {
+	tplStr := ""
+	if extra != nil {
+		tplStr = extra.String()
+	}
+	response, err := vc.c.Client.Call("one.vrouter.instantiate", vc.ID, number, tplid, name, hold, tplStr)
 
 	if err != nil {
 		return 0, err
@@ -197,8 +196,8 @@ func (vc *VirtualRouterController) Instantiate(number, tplid int, name string, h
 
 // AttachNic attaches a new network interface to the virtual router and the virtual machines.
 // * tpl: NIC template string
-func (vc *VirtualRouterController) AttachNic(tpl string) error {
-	_, err := vc.c.Client.Call("one.vrouter.attachnic", vc.ID, tpl)
+func (vc *VirtualRouterController) AttachNic(n *NIC) error {
+	_, err := vc.c.Client.Call("one.vrouter.attachnic", vc.ID, n.String())
 	return err
 }
 

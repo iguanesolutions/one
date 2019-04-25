@@ -46,42 +46,8 @@ type Template struct {
 	Template    templateTemplate `xml:"TEMPLATE"`
 }
 
-// templateTemplate represent the template part of the OpenNebula Template
 type templateTemplate struct {
-	CPU        float64             `xml:"CPU"`
-	Memory     int                 `xml:"MEMORY"`
-	Context    *templateContext    `xml:"CONTEXT"`
-	Disk       []templateDisk      `xml:"DISK"`
-	Graphics   *templateGraphics   `xml:"GRAPHICS"`
-	NICDefault *templateNicDefault `xml:"NIC_DEFAULT"`
-	OS         *templateOS         `xml:"OS"`
-	UserInputs templateUserInputs  `xml:"USER_INPUTS"`
-	Dynamic    unmatchedTagsSlice  `xml:",any"`
-}
-
-type templateContext struct {
-	Dynamic unmatchedTagsMap `xml:",any"`
-}
-
-type templateDisk struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateGraphics struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateUserInputs struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateNicDefault struct {
-	Model string `xml:"MODEL"`
-}
-
-type templateOS struct {
-	Arch string `xml:"ARCH"`
-	Boot string `xml:"BOOT"`
+	Dynamic DynamicTemplate `xml:",any"`
 }
 
 // Templates returns a Templates controller.
@@ -203,9 +169,12 @@ func (tc *TemplateController) Delete() error {
 }
 
 // Instantiate will instantiate the template
-func (tc *TemplateController) Instantiate(name string, pending bool, extra string, clone bool) (uint, error) {
-	response, err := tc.c.Client.Call("one.template.instantiate", tc.ID, name, pending, extra, clone)
-
+func (tc *TemplateController) Instantiate(name string, pending bool, tpl *VMTemplateBuilder, clone bool) (uint, error) {
+	tplStr := ""
+	if tpl != nil {
+		tplStr = tpl.String()
+	}
+	response, err := tc.c.Client.Call("one.template.instantiate", tc.ID, name, pending, tplStr, clone)
 	if err != nil {
 		return 0, err
 	}
