@@ -21,22 +21,22 @@ import (
 )
 
 func Example() {
-	template := NewTemplateBuilder()
+	template := NewDynamicTemplate()
 
 	// Main
-	template.AddValue("cpu", 1)
-	template.AddValue("memory", "64")
-	template.AddValue("vcpu", "2")
+	template.AddPair("cpu", 1)
+	template.AddPair("memory", "64")
+	template.AddPair("vcpu", "2")
 
 	// Disk
-	vector := template.NewVector("disk")
-	vector.AddValue("image_id", "119")
-	vector.AddValue("dev_prefix", "vd")
+	vector := template.AddVector("disk")
+	vector.AddPair("image_id", "119")
+	vector.AddPair("dev_prefix", "vd")
 
 	// NIC
-	vector = template.NewVector("nic")
-	vector.AddValue("network_id", "3")
-	vector.AddValue("model", "virtio")
+	vector = template.AddVector("nic")
+	vector.AddPair("network_id", "3")
+	vector.AddPair("model", "virtio")
 
 	fmt.Println(template)
 	// Output:
