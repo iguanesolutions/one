@@ -36,11 +36,11 @@ type GroupPool struct {
 
 // Group represents an OpenNebula Group
 type Group struct {
-	ID       uint          `xml:"ID"`
-	Name     string        `xml:"NAME"`
-	Users    []int         `xml:"USERS>ID"`
-	Admins   []int         `xml:"ADMINS>ID"`
-	Template groupTemplate `xml:"TEMPLATE"`
+	ID       uint            `xml:"ID"`
+	Name     string          `xml:"NAME"`
+	UsersID  []int           `xml:"USERS>ID"`
+	AdminsID []int           `xml:"ADMINS>ID"`
+	Template DynamicTemplate `xml:"TEMPLATE"`
 
 	// Variable part between one.grouppool.info and one.group.info
 	quotasList
