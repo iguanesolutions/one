@@ -34,26 +34,26 @@ type VirtualNetworkPool struct {
 
 // VirtualNetwork represents an OpenNebula VirtualNetwork
 type VirtualNetwork struct {
-	ID                   uint                   `xml:"ID"`
-	UID                  int                    `xml:"UID"`
-	GID                  int                    `xml:"GID"`
-	UName                string                 `xml:"UNAME"`
-	GName                string                 `xml:"GNAME"`
-	Name                 string                 `xml:"NAME"`
-	Permissions          *Permissions           `xml:"PERMISSIONS"`
-	Clusters             []int                  `xml:"CLUSTERS>ID"`
-	Bridge               string                 `xml:"BRIDGE"`
-	BridgeType           string                 `xml:"BRIDGE_TYPE"` // minOccurs=0
-	ParentNetworkID      string                 `xml:"PARENT_NETWORK_ID"`
-	VNMad                string                 `xml:"VN_MAD"`
-	PhyDev               string                 `xml:"PHYDEV"`
-	VlanID               string                 `xml:"VLAN_ID"`       // minOccurs=0
-	OuterVlanID          string                 `xml:"OUTER_VLAN_ID"` // minOccurs=0
-	VlanIDAutomatic      string                 `xml:"VLAN_ID_AUTOMATIC"`
-	OuterVlanIDAutomatic string                 `xml:"OUTER_VLAN_ID_AUTOMATIC"`
-	UsedLeases           int                    `xml:"USED_LEASES"`
-	VRouters             []int                  `xml:"VROUTERS>ID"`
-	Template             virtualNetworkTemplate `xml:"TEMPLATE"`
+	ID                   uint            `xml:"ID"`
+	UID                  int             `xml:"UID"`
+	GID                  int             `xml:"GID"`
+	UName                string          `xml:"UNAME"`
+	GName                string          `xml:"GNAME"`
+	Name                 string          `xml:"NAME"`
+	Permissions          *Permissions    `xml:"PERMISSIONS"`
+	ClustersID           []int           `xml:"CLUSTERS>ID"`
+	Bridge               string          `xml:"BRIDGE"`
+	BridgeType           string          `xml:"BRIDGE_TYPE"` // minOccurs=0
+	ParentNetworkID      string          `xml:"PARENT_NETWORK_ID"`
+	VNMad                string          `xml:"VN_MAD"`
+	PhyDev               string          `xml:"PHYDEV"`
+	VlanID               string          `xml:"VLAN_ID"`       // minOccurs=0
+	OuterVlanID          string          `xml:"OUTER_VLAN_ID"` // minOccurs=0
+	VlanIDAutomatic      string          `xml:"VLAN_ID_AUTOMATIC"`
+	OuterVlanIDAutomatic string          `xml:"OUTER_VLAN_ID_AUTOMATIC"`
+	UsedLeases           int             `xml:"USED_LEASES"`
+	VRoutersID           []int           `xml:"VROUTERS>ID"`
+	Template             DynamicTemplate `xml:"TEMPLATE"`
 
 	// Variable parts between one.vnpool.info and one.vn.info
 	ARs  []VirtualNetworkAR `xml:"AR_POOL>AR"`
@@ -83,13 +83,13 @@ type VirtualNetworkAR struct {
 	IP6               string  `xml:"IP6"`
 	IP6End            string  `xml:"IP6_END"`
 	UsedLeases        string  `xml:"USED_LEASES"`
-	Leases            []lease `xml:"LEASES>LEASE"`
+	Leases            []Lease `xml:"LEASES>LEASE"`
 
 	// Not filled with Info
 	Allocated string `xml:ALLOCATED`
 }
 
-type lease struct {
+type Lease struct {
 	IP        string `xml:"IP"`
 	IP6       string `xml:"IP6"`
 	IP6Global string `xml:"IP6GLOBAL"`

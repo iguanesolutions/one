@@ -57,25 +57,25 @@ type VM struct {
 	MonitoringInfos vmMonitoring      `xml:"MONITORING"`
 	Template        vmTemplate        `xml:"TEMPLATE"`
 	UserTemplate    *vmUserTemplate   `xml:"USER_TEMPLATE"`
-	HistoryRecords  []vmHistoryRecord `xml:"HISTORY_RECORDS>HISTORY"`
+	HistoryRecords  []VMHistoryRecord `xml:"HISTORY_RECORDS>HISTORY"`
 
 	// Not filled with NewUserPool call
 	LockInfos *Lock `xml:"LOCK"`
 }
 
 type vmMonitoring struct {
-	DiskSize     []vmMonitoringDiskSize     `xml:"DISK_SIZE"`
-	SnapshotSize []vmMonitoringSnapshotSize `xml:"SNAPSHOT_SIZE"`
+	DiskSize     []VMMonitoringDiskSize     `xml:"DISK_SIZE"`
+	SnapshotSize []VMMonitoringSnapshotSize `xml:"SNAPSHOT_SIZE"`
 	Dynamic      unmatchedTagsSlice         `xml:",any"`
 }
 
-type vmMonitoringDiskSize struct {
+type VMMonitoringDiskSize struct {
 	ID   int `xml:"ID"`
 	Size int `xml:"SIZE"`
 }
 
 // History records
-type vmHistoryRecord struct {
+type VMHistoryRecord struct {
 	OID       int                       `xml:"OID"`
 	SEQ       int                       `xml:"SEQ"`
 	Hostname  string                    `xml:"HOSTNAME"`
@@ -96,7 +96,7 @@ type vmHistoryRecord struct {
 	ETime     int                       `xml:"ETIME"`
 	VMMad     string                    `xml:"VM_MAD"`
 	TMMad     string                    `xml:"TM_MAD"`
-	Snapshots []vmHistoryRecordSnapshot `xml:"SNAPSHOTS"`
+	Snapshots []VMHistoryRecordSnapshot `xml:"SNAPSHOTS"`
 }
 
 // VMUserTemplate contain custom attributes
