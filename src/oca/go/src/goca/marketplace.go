@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // MarketPlacesController is a controller for a pool of MarketPlaces
@@ -34,25 +35,48 @@ type MarketPlacePool struct {
 
 // MarketPlace represents an OpenNebula MarketPlace
 type MarketPlace struct {
-	ID                 uint                `xml:"ID"`
-	UID                int                 `xml:"UID"`
-	GID                int                 `xml:"GID"`
-	UName              string              `xml:"UNAME"`
-	GName              string              `xml:"GNAME"`
-	Name               string              `xml:"NAME"`
-	MarketMad          string              `xml:"MARKET_MAD"`
-	ZoneID             string              `xml:"ZONE_ID"`
-	TotalMB            int                 `xml:"TOTAL_MB"`
-	FreeMB             int                 `xml:"FREE_MB"`
-	UsedMB             int                 `xml:"USED_MB"`
-	MarketPlaceAppsIDs []int               `xml:"MARKETPLACEAPPS>ID"`
-	Permissions        *Permissions        `xml:"PERMISSIONS"`
-	Template           marketPlaceTemplate `xml:"TEMPLATE"`
+	ID                 uint           `xml:"ID"`
+	UID                int            `xml:"UID"`
+	GID                int            `xml:"GID"`
+	UName              string         `xml:"UNAME"`
+	GName              string         `xml:"GNAME"`
+	Name               string         `xml:"NAME"`
+	MarketMad          string         `xml:"MARKET_MAD"`
+	ZoneID             string         `xml:"ZONE_ID"`
+	TotalMB            int            `xml:"TOTAL_MB"`
+	FreeMB             int            `xml:"FREE_MB"`
+	UsedMB             int            `xml:"USED_MB"`
+	MarketPlaceAppsIDs []int          `xml:"MARKETPLACEAPPS>ID"`
+	Permissions        *Permissions   `xml:"PERMISSIONS"`
+	Template           MarketTemplate `xml:"TEMPLATE"`
 }
 
-// MarketPlaceTemplate represent the template part of the MarketPlace
-type marketPlaceTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+type MarketTemplateKeys string
+
+const (
+	MarketMadMK  MarketTemplateKeys = "MARKET_MAD"
+	PublicDirMK  MarketTemplateKeys = "PUBLIC_DIR"
+	BaseUrlMK    MarketTemplateKeys = "BASE_URL"
+	BridgeListMK MarketTemplateKeys = "BRIDGE_LIST"
+)
+
+type MarketTemplate struct {
+	DynamicTemplate
+}
+
+// NewMarketTemplate returns a structure dis entity to build
+func NewMarketTemplate() *MarketTemplate {
+	return &MarketTemplate{}
+}
+
+// Get is a getValue for all MarketTemplate keys
+func (t *MarketTemplate) Get(key MarketTemplateKeys) (string, error) {
+	return t.GetStr(string(key))
+}
+
+// Add adds a MarketTemplate key with value. NOT ALL KEYS SHOULD BE ADDED, see the documentation
+func (t *MarketTemplate) Add(key MarketTemplateKeys, value string) error {
+	return t.AddPair(string(key), value)
 }
 
 // MarketPlaces returns a MarketPlaces controller
@@ -145,8 +169,13 @@ func (mc *MarketPlaceController) Info() (*MarketPlace, error) {
 
 // Create allocates a new marketplace. It returns the new marketplace ID.
 // * tpl: template of the marketplace
-func (mc *MarketPlacesController) Create(tpl string) (uint, error) {
-	response, err := mc.c.Client.Call("one.market.allocate", tpl)
+func (mc *MarketPlacesController) Create(name string, tpl *MarketTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("MarketPlace Create: nil template arg")
+	}
+	tpl.SetName(name)
+
+	response, err := mc.c.Client.Call("one.market.allocate", tpl.String())
 	if err != nil {
 		return 0, err
 	}
@@ -160,12 +189,15 @@ func (mc *MarketPlaceController) Delete() error {
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the marketplace contents.
+// * tpl: The new marketplace contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (mc *MarketPlaceController) Update(tpl string, uType UpdateType) error {
-	_, err := mc.c.Client.Call("one.market.update", mc.ID, tpl, uType)
+func (mc *MarketPlaceController) Update(tpl *MarketTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Market Update: nil template")
+	}
+	_, err := mc.c.Client.Call("one.market.update", mc.ID, tpl.String(), uType)
 	return err
 }
 

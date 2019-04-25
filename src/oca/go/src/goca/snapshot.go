@@ -37,14 +37,6 @@ type ImageSnapshot struct {
 	Snapshots    []snapshot `xml:"SNAPSHOT"`
 }
 
-// VMSnapshot entity related
-type VMSnapshot struct {
-	HypervisorID string `xml:"HYPERVISOR_ID"`
-	Name         string `xml:"NAME"`
-	ID           int    `xml:"SNAPSHOT_ID"`
-	Time         string `xml:"TIME"`
-}
-
 type VMHistoryRecordSnapshot struct {
 	ImageSnapshot
 	DiskID int `xml:"DISK_ID"`

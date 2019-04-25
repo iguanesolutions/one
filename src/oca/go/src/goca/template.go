@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // TemplatesController is a controller for a pool of template
@@ -34,55 +35,21 @@ type TemplatePool struct {
 
 // Template represents an OpenNebula Template
 type Template struct {
-	ID          uint             `xml:"ID"`
-	UID         int              `xml:"UID"`
-	GID         int              `xml:"GID"`
-	UName       string           `xml:"UNAME"`
-	GName       string           `xml:"GNAME"`
-	Name        string           `xml:"NAME"`
-	LockInfos   *Lock            `xml:"LOCK"`
-	Permissions *Permissions     `xml:"PERMISSIONS"`
-	RegTime     int              `xml:"REGTIME"`
-	Template    templateTemplate `xml:"TEMPLATE"`
+	ID          uint         `xml:"ID"`
+	UID         int          `xml:"UID"`
+	GID         int          `xml:"GID"`
+	UName       string       `xml:"UNAME"`
+	GName       string       `xml:"GNAME"`
+	Name        string       `xml:"NAME"`
+	LockInfos   *Lock        `xml:"LOCK"`
+	Permissions *Permissions `xml:"PERMISSIONS"`
+	RegTime     int          `xml:"REGTIME"`
+	Template    VMTemplate   `xml:"TEMPLATE"`
 }
 
-// templateTemplate represent the template part of the OpenNebula Template
-type templateTemplate struct {
-	CPU        float64             `xml:"CPU"`
-	Memory     int                 `xml:"MEMORY"`
-	Context    *templateContext    `xml:"CONTEXT"`
-	Disk       []templateDisk      `xml:"DISK"`
-	Graphics   *templateGraphics   `xml:"GRAPHICS"`
-	NICDefault *templateNicDefault `xml:"NIC_DEFAULT"`
-	OS         *templateOS         `xml:"OS"`
-	UserInputs templateUserInputs  `xml:"USER_INPUTS"`
-	Dynamic    unmatchedTagsSlice  `xml:",any"`
-}
-
-type templateContext struct {
-	Dynamic unmatchedTagsMap `xml:",any"`
-}
-
-type templateDisk struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateGraphics struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateUserInputs struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type templateNicDefault struct {
-	Model string `xml:"MODEL"`
-}
-
-type templateOS struct {
-	Arch string `xml:"ARCH"`
-	Boot string `xml:"BOOT"`
-}
+//type templateTemplate struct {
+//	DynamicTemplate
+//}
 
 // Templates returns a Templates controller.
 func (c *Controller) Templates() *TemplatesController {
@@ -169,8 +136,13 @@ func (tc *TemplateController) Info() (*Template, error) {
 }
 
 // Create allocates a new template. It returns the new template ID.
-func (tc *TemplatesController) Create(template string) (uint, error) {
-	response, err := tc.c.Client.Call("one.template.allocate", template)
+func (tc *TemplatesController) Create(name string, tpl *VMTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("Template Create: nil template arg")
+	}
+	tpl.Dynamic.SetName(name)
+
+	response, err := tc.c.Client.Call("one.template.allocate", tpl.String())
 	if err != nil {
 		return 0, err
 	}
@@ -178,12 +150,15 @@ func (tc *TemplatesController) Create(template string) (uint, error) {
 	return uint(response.BodyInt()), nil
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the template contents.
+// * tpl: The new template contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (tc *TemplateController) Update(tpl string, uType UpdateType) error {
-	_, err := tc.c.Client.Call("one.template.update", tc.ID, tpl, uType)
+func (tc *TemplateController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Template Update: nil template arg")
+	}
+	_, err := tc.c.Client.Call("one.template.update", tc.ID, tpl.String(), uType)
 	return err
 }
 
@@ -214,9 +189,12 @@ func (tc *TemplateController) Delete() error {
 }
 
 // Instantiate will instantiate the template
-func (tc *TemplateController) Instantiate(name string, pending bool, extra string, clone bool) (uint, error) {
-	response, err := tc.c.Client.Call("one.template.instantiate", tc.ID, name, pending, extra, clone)
-
+func (tc *TemplateController) Instantiate(name string, pending bool, tpl *VMTemplate, clone bool) (uint, error) {
+	tplStr := ""
+	if tpl != nil {
+		tplStr = tpl.String()
+	}
+	response, err := tc.c.Client.Call("one.template.instantiate", tc.ID, name, pending, tplStr, clone)
 	if err != nil {
 		return 0, err
 	}

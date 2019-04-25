@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // VirtualNetworksController is a controller for a pool of VirtualNetworks
@@ -34,34 +35,30 @@ type VirtualNetworkPool struct {
 
 // VirtualNetwork represents an OpenNebula VirtualNetwork
 type VirtualNetwork struct {
-	ID                   uint            `xml:"ID"`
-	UID                  int             `xml:"UID"`
-	GID                  int             `xml:"GID"`
-	UName                string          `xml:"UNAME"`
-	GName                string          `xml:"GNAME"`
-	Name                 string          `xml:"NAME"`
-	Permissions          *Permissions    `xml:"PERMISSIONS"`
-	ClustersID           []int           `xml:"CLUSTERS>ID"`
-	Bridge               string          `xml:"BRIDGE"`
-	BridgeType           string          `xml:"BRIDGE_TYPE"` // minOccurs=0
-	ParentNetworkID      string          `xml:"PARENT_NETWORK_ID"`
-	VNMad                string          `xml:"VN_MAD"`
-	PhyDev               string          `xml:"PHYDEV"`
-	VlanID               string          `xml:"VLAN_ID"`       // minOccurs=0
-	OuterVlanID          string          `xml:"OUTER_VLAN_ID"` // minOccurs=0
-	VlanIDAutomatic      string          `xml:"VLAN_ID_AUTOMATIC"`
-	OuterVlanIDAutomatic string          `xml:"OUTER_VLAN_ID_AUTOMATIC"`
-	UsedLeases           int             `xml:"USED_LEASES"`
-	VRoutersID           []int           `xml:"VROUTERS>ID"`
-	Template             DynamicTemplate `xml:"TEMPLATE"`
+	ID                   uint                   `xml:"ID"`
+	UID                  int                    `xml:"UID"`
+	GID                  int                    `xml:"GID"`
+	UName                string                 `xml:"UNAME"`
+	GName                string                 `xml:"GNAME"`
+	Name                 string                 `xml:"NAME"`
+	Permissions          *Permissions           `xml:"PERMISSIONS"`
+	ClustersID           []int                  `xml:"CLUSTERS>ID"`
+	Bridge               string                 `xml:"BRIDGE"`
+	BridgeType           string                 `xml:"BRIDGE_TYPE"` // minOccurs=0
+	ParentNetworkID      string                 `xml:"PARENT_NETWORK_ID"`
+	VNMad                string                 `xml:"VN_MAD"`
+	PhyDev               string                 `xml:"PHYDEV"`
+	VlanID               string                 `xml:"VLAN_ID"`       // minOccurs=0
+	OuterVlanID          string                 `xml:"OUTER_VLAN_ID"` // minOccurs=0
+	VlanIDAutomatic      string                 `xml:"VLAN_ID_AUTOMATIC"`
+	OuterVlanIDAutomatic string                 `xml:"OUTER_VLAN_ID_AUTOMATIC"`
+	UsedLeases           int                    `xml:"USED_LEASES"`
+	VRoutersID           []int                  `xml:"VROUTERS>ID"`
+	Template             VirtualNetworkTemplate `xml:"TEMPLATE"`
 
 	// Variable parts between one.vnpool.info and one.vn.info
 	ARs  []VirtualNetworkAR `xml:"AR_POOL>AR"`
 	Lock *Lock              `xml:"LOCK"`
-}
-
-type virtualNetworkTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
 }
 
 type VirtualNetworkAR struct {
@@ -188,9 +185,15 @@ func (vc *VirtualNetworkController) Info() (*VirtualNetwork, error) {
 }
 
 // Create allocates a new virtualnetwork. It returns the new virtualnetwork ID.
+// * name: the name of the virtualnetwork
 // * tpl: template of the virtualnetwork
 // * clusterID: The cluster ID. If it is -1, the default one will be used.
-func (vc *VirtualNetworksController) Create(tpl string, clusterID int) (uint, error) {
+func (vc *VirtualNetworksController) Create(name string, tpl *VirtualNetworkTemplate, clusterID int) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("VirtualNetwork Create: nil template arg")
+	}
+	tpl.Dynamic.SetName(name)
+
 	response, err := vc.c.Client.Call("one.vn.allocate", tpl, clusterID)
 	if err != nil {
 		return 0, err
@@ -206,9 +209,12 @@ func (vc *VirtualNetworkController) Delete() error {
 }
 
 // AddAr adds address ranges to a virtual network.
-// * tpl: template of the address ranges to add. Syntax can be the usual attribute=value or XML
-func (vc *VirtualNetworkController) AddAr(tpl string) error {
-	_, err := vc.c.Client.Call("one.vn.add_ar", vc.ID, tpl)
+// * tpl: template of the address ranges to add.
+func (vc *VirtualNetworkController) AddAr(tpl *AddressRange) error {
+	if tpl == nil {
+		return fmt.Errorf("VirtualNetwork AddAr: nil template")
+	}
+	_, err := vc.c.Client.Call("one.vn.add_ar", vc.ID, tpl.String())
 	return err
 }
 
@@ -220,8 +226,11 @@ func (vc *VirtualNetworkController) RmAr(arID int) error {
 }
 
 // UpdateAr updates the attributes of an address range.
-// * tpl: template of the address ranges to update. Syntax can be the usual attribute=value or XML
-func (vc *VirtualNetworkController) UpdateAr(tpl string) error {
+// * tpl: template of the address ranges to update.
+func (vc *VirtualNetworkController) UpdateAr(tpl *AddressRange) error {
+	if tpl == nil {
+		return fmt.Errorf("VirtualNetwork UpdateAr: empty template")
+	}
 	_, err := vc.c.Client.Call("one.vn.update_ar", vc.ID, tpl)
 	return err
 }
@@ -258,7 +267,10 @@ func (vc *VirtualNetworkController) Release(tpl string) error {
 // * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (vc *VirtualNetworkController) Update(tpl string, uType UpdateType) error {
+func (vc *VirtualNetworkController) Update(tpl *VirtualNetworkTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("VirtualNetwork Update: empty template")
+	}
 	_, err := vc.c.Client.Call("one.vn.update", vc.ID, tpl, uType)
 	return err
 }

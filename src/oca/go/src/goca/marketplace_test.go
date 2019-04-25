@@ -20,18 +20,18 @@ import (
 	"testing"
 )
 
-func TestMarketplace(t *testing.T){
+func TestMarketplace(t *testing.T) {
 	var mkt_name string = "marketplace_test_go"
 
 	var market *MarketPlace
 
-	var mkt_template string =  "NAME = \"" + mkt_name + "\"\n" +
-							"MARKET_MAD = \"http\"\n" +
-							"BASE_URL = \"http://url/\"\n" +
-							"PUBLIC_DIR = \"/var/loca/market-http\""
+	mkt_template := NewMarketTemplate()
+	mkt_template.Add(MarketMadMK, "http")
+	mkt_template.Add(BaseUrlMK, "http://url/")
+	mkt_template.Add(PublicDirMK, "/var/loca/market-http")
 
 	//Create Marketpkace
-	market_id, err := testCtrl.MarketPlaces().Create(mkt_template)
+	market_id, err := testCtrl.MarketPlaces().Create(mkt_name, mkt_template)
 	if err != nil {
 		t.Fatalf("Test failed:\n" + err.Error())
 	}
@@ -52,7 +52,8 @@ func TestMarketplace(t *testing.T){
 		t.Errorf("Test failed, expected: '%s', got:  '%s'", mkt_name, actual)
 	}
 
-	tmpl := "ATT1 = \"VAL1\""
+	tmpl := NewMarketTemplate()
+	tmpl.Add("ATT1", "VAL1")
 
 	//Update Marketpkace
 	err = marketCtrl.Update(tmpl, 1)
@@ -67,12 +68,12 @@ func TestMarketplace(t *testing.T){
 	}
 
 	actual_mm := market.MarketMad
-	actual_1, err := market.Template.Dynamic.GetContentByName("ATT1")
+	actual_1, err := market.Template.GetPair("ATT1")
 	if err != nil {
 		t.Errorf("Test failed, can't retrieve '%s', error: %s", "ATT1", err.Error())
 	} else {
-		if actual_1 != "VAL1" {
-			t.Errorf("Test failed, expected: '%s', got:  '%s'", "VAL1", actual_1)
+		if actual_1.Value != "VAL1" {
+			t.Errorf("Test failed, expected: '%s', got:  '%s'", "VAL1", actual_1.Value)
 		}
 	}
 

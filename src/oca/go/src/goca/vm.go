@@ -55,8 +55,8 @@ type VM struct {
 	ETime           int               `xml:"ETIME"`
 	DeployID        string            `xml:"DEPLOY_ID"`
 	MonitoringInfos vmMonitoring      `xml:"MONITORING"`
-	Template        vmTemplate        `xml:"TEMPLATE"`
-	UserTemplate    *vmUserTemplate   `xml:"USER_TEMPLATE"`
+	Template        VMTemplate        `xml:"TEMPLATE"`
+	UserTemplate    *VMUserTemplate   `xml:"USER_TEMPLATE"`
 	HistoryRecords  []VMHistoryRecord `xml:"HISTORY_RECORDS>HISTORY"`
 
 	// Not filled with NewUserPool call
@@ -64,9 +64,11 @@ type VM struct {
 }
 
 type vmMonitoring struct {
+	CPU          float64
+	Memory       uint
 	DiskSize     []VMMonitoringDiskSize     `xml:"DISK_SIZE"`
 	SnapshotSize []VMMonitoringSnapshotSize `xml:"SNAPSHOT_SIZE"`
-	Dynamic      unmatchedTagsSlice         `xml:",any"`
+	Dynamic      dynamicTemplateAny         `xml:",any"`
 }
 
 type VMMonitoringDiskSize struct {
@@ -97,73 +99,6 @@ type VMHistoryRecord struct {
 	VMMad     string                    `xml:"VM_MAD"`
 	TMMad     string                    `xml:"TM_MAD"`
 	Snapshots []VMHistoryRecordSnapshot `xml:"SNAPSHOTS"`
-}
-
-// VMUserTemplate contain custom attributes
-type vmUserTemplate struct {
-	Error        string           `xml:"ERROR"`
-	SchedMessage string           `xml:"SCHED_MESSAGE"`
-	Dynamic      unmatchedTagsMap `xml:",any"`
-}
-
-type vmTemplate struct {
-	CPU                float64               `xml:"CPU"`
-	Memory             int                   `xml:"MEMORY"`
-	NICs               []vmNic               `xml:"NIC"`
-	NICAliases         []vmNicAlias          `xml:"NIC_ALIAS"`
-	Context            *vmContext            `xml:"CONTEXT"`
-	Disks              []vmDisk              `xml:"DISK"`
-	Graphics           *vmGraphics           `xml:"GRAPHICS"`
-	OS                 *vmOS                 `xml:"OS"`
-	Snapshots          []VMSnapshot          `xml:"SNAPSHOT"`
-	SecurityGroupRules []VMSecurityGroupRule `xml:"SECURITY_GROUP_RULE"`
-	Dynamic            unmatchedTagsSlice    `xml:",any"`
-}
-
-type vmContext struct {
-	Dynamic unmatchedTagsMap `xml:",any"`
-}
-
-type vmNic struct {
-	ID      int                `xml:"NIC_ID"`
-	Network string             `xml:"NETWORK"`
-	IP      string             `xml:"IP"`
-	MAC     string             `xml:"MAC"`
-	PhyDev  string             `xml:"PHYDEV"`
-	Dynamic unmatchedTagsSlice `xml:",any"`
-}
-
-type vmNicAlias struct {
-	ID       int    `xml:"NIC_ID"`    // minOccurs=1
-	Parent   string `xml:"PARENT"`    // minOccurs=1
-	ParentID string `xml:"PARENT_ID"` // minOccurs=1
-}
-
-type vmGraphics struct {
-	Listen string `xml:"LISTEN"`
-	Port   string `xml:"PORT"`
-	Type   string `xml:"TYPE"`
-}
-
-type vmDisk struct {
-	ID           int                `xml:"DISK_ID"`
-	Datastore    string             `xml:"DATASTORE"`
-	DiskType     string             `xml:"DISK_TYPE"`
-	Image        string             `xml:"IMAGE"`
-	Driver       string             `xml:"DRIVER"`
-	OriginalSize int                `xml:"ORIGINAL_SIZE"`
-	Size         int                `xml:"SIZE"`
-	Dynamic      unmatchedTagsSlice `xml:",any"`
-}
-
-type vmOS struct {
-	Arch string `xml:"ARCH"`
-	Boot string `xml:"BOOT"`
-}
-
-type VMSecurityGroupRule struct {
-	SecurityGroupRule
-	SecurityGroup string `xml:"SECURITY_GROUP_NAME"`
 }
 
 // VMs returns a new vm pool controller.
@@ -343,39 +278,18 @@ func (vc *VMsController) CalculateShowback(firstMonth, firstYear, lastMonth, las
 
 // Create allocates a new VM based on the template string provided. It
 // returns the image ID
-func (vc *VMsController) Create(template string, pending bool) (uint, error) {
-	response, err := vc.c.Client.Call("one.vm.allocate", template, pending)
+func (vc *VMsController) Create(name string, pending bool, tpl *VMTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("VM Create: nil template arg")
+	}
+	tpl.Dynamic.SetName(name)
+
+	response, err := vc.c.Client.Call("one.vm.allocate", tpl.String(), pending)
 	if err != nil {
 		return 0, err
 	}
 
 	return uint(response.BodyInt()), nil
-}
-
-// State returns the VMState and LCMState
-func (vm *VM) State() (VMState, LCMState, error) {
-	state := VMState(vm.StateRaw)
-	if !state.isValid() {
-		return -1, -1, fmt.Errorf("VM State: this state value is not currently handled: %d\n", vm.StateRaw)
-	}
-	lcmState := LCMState(vm.LCMStateRaw)
-	if !lcmState.isValid() {
-		return state, -1, fmt.Errorf("VM LCMState: this state value is not currently handled: %d\n", vm.LCMStateRaw)
-	}
-	return state, lcmState, nil
-}
-
-// StateString returns the VMState and LCMState as strings
-func (vm *VM) StateString() (string, string, error) {
-	state := VMState(vm.StateRaw)
-	if !state.isValid() {
-		return "", "", fmt.Errorf("VM State: this state value is not currently handled: %d\n", vm.StateRaw)
-	}
-	lcmState := LCMState(vm.LCMStateRaw)
-	if !lcmState.isValid() {
-		return state.String(), "", fmt.Errorf("VM LCMState: this state value is not currently handled: %d\n", vm.LCMStateRaw)
-	}
-	return state.String(), lcmState.String(), nil
 }
 
 // Action is the generic method to run any action on the VM
@@ -384,18 +298,24 @@ func (vc *VMController) Action(action string) error {
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the VM contents.
+// * tpl: The new VM contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (vc *VMController) Update(tpl string, uType UpdateType) error {
+func (vc *VMController) Update(tpl *VMTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("VM Update: nil template arg")
+	}
 	_, err := vc.c.Client.Call("one.vm.update", vc.ID, tpl, uType)
 	return err
 }
 
 // UpdateConf updates (appends) a set of supported configuration attributes in
 // the VM template
-func (vc *VMController) UpdateConf(tpl string) error {
+func (vc *VMController) UpdateConf(tpl *VMTemplate) error {
+	if tpl == nil {
+		return fmt.Errorf("VM UpdateConf: nil template")
+	}
 	_, err := vc.c.Client.Call("one.vm.updateconf", vc.ID, tpl)
 	return err
 }
@@ -444,8 +364,11 @@ func (vc *VMController) Deploy(hostID uint, enforce bool, dsID int) error {
 }
 
 // Resize changes the capacity of the virtual machine
-func (vc *VMController) Resize(template string, enforce bool) error {
-	_, err := vc.c.Client.Call("one.vm.resize", vc.ID, template, enforce)
+func (vc *VMController) Resize(c *VMCapacity, enforce bool) error {
+	if c == nil {
+		return fmt.Errorf("VM Resize: nil pointer parameter for capacity")
+	}
+	_, err := vc.c.Client.Call("one.vm.resize", vc.ID, c.String(), enforce)
 	return err
 }
 
@@ -483,8 +406,8 @@ func (vc *VMDiskController) SnapshotRename(snapID int, newName string) error {
 // DiskAttach attach a new disk to the virtual machine. diskTemplate is a string containing
 // a single DISK vector attribute. Syntax can be the usual attribute=value or
 // XML
-func (vc *VMController) DiskAttach(diskTemplate string) error {
-	_, err := vc.c.Client.Call("one.vm.attach", vc.ID, diskTemplate)
+func (vc *VMController) DiskAttach(disk *Disk) error {
+	_, err := vc.c.Client.Call("one.vm.attach", vc.ID, disk.String())
 	return err
 }
 
@@ -525,8 +448,8 @@ func (vc *VMController) Migrate(hostID uint, live, enforce bool, dsID uint, migr
 }
 
 // AttachNic attaches new network interface to the virtual machine
-func (vc *VMController) AttachNic(tpl string) error {
-	_, err := vc.c.Client.Call("one.vm.attachnic", vc.ID, tpl)
+func (vc *VMController) AttachNic(n *NIC) error {
+	_, err := vc.c.Client.Call("one.vm.attachnic", vc.ID, n.String())
 	return err
 }
 

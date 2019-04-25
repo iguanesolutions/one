@@ -87,7 +87,7 @@ type hostTemplate struct {
 	// Example of reservation: https://github.com/OpenNebula/addon-storpool/blob/ba9dd3462b369440cf618c4396c266f02e50f36f/misc/reserved.sh
 	ReservedMem int                `xml:"RESERVED_MEM"`
 	ReservedCPU int                `xml:"RESERVED_CPU"`
-	Dynamic     unmatchedTagsSlice `xml:",any"`
+	Dynamic     dynamicTemplateAny `xml:",any"`
 }
 
 // HostState is the state of an OpenNebula Host
@@ -236,11 +236,14 @@ func (hc *HostController) Status(status int) error {
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the host contents.
+// * tpl: The new host contents. Syntax can be the usual attribute=value or XML.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (hc *HostController) Update(tpl string, uType UpdateType) error {
+func (hc *HostController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Host Update: nil template")
+	}
 	_, err := hc.c.Client.Call("one.host.update", hc.ID, tpl, uType)
 	return err
 }

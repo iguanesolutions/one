@@ -25,13 +25,14 @@ import (
 func TestVirtualRouter(t *testing.T){
 	var vr_name string = "new_vr"
 	var vr *VirtualRouter
-	var vr_template string = "NAME = \"" + vr_name + "\"\n" +
-							"VROUTER = YES\n" +
-							"ATT1 = \"VAL1\"\n" +
-							"ATT2 = \"VAL2\""
+
+	vr_template := NewDynamicTemplate()
+	vr_template.AddPair("VROUTER", "YES")
+	vr_template.AddPair("ATT1", "VAL1")
+	vr_template.AddPair("ATT2", "VAL2")
 
 	//Create VirtualRouter
-	vr_id, err := testCtrl.VirtualRouters().Create(vr_template)
+	vr_id, err := testCtrl.VirtualRouters().Create(vr_name, vr_template)
 
 	if err != nil {
 		t.Fatalf("Test failed:\n" + err.Error())
@@ -49,7 +50,8 @@ func TestVirtualRouter(t *testing.T){
 		t.Errorf("Test failed, expected: '%s', got:  '%s'", vr_name, actual)
 	}
 
-	tmpl := "ATT3 = \"VAL3\""
+	tmpl := NewDynamicTemplate()
+	tmpl.AddPair("ATT3", "VAL3")
 
 	//Update VirtualRouter
 	err = vrC.Update(tmpl, 1)
@@ -64,20 +66,20 @@ func TestVirtualRouter(t *testing.T){
 	}
 
 
-	actual_1, err := vr.Template.Dynamic.GetContentByName("ATT1")
+	actual_1, err := vr.Template.Dynamic.GetPair("ATT1")
 	if err != nil {
 		t.Errorf("Test failed, can't retrieve '%s', error: %s", "ATT1", err.Error())
 	} else {
-		if actual_1 != "VAL1" {
+		if actual_1.Value != "VAL1" {
 			t.Errorf("Test failed, expected: '%s', got:  '%s'", "VAL1", actual_1)
 		}
 	}
 
-	actual_3, err := vr.Template.Dynamic.GetContentByName("ATT3")
+	actual_3, err := vr.Template.Dynamic.GetPair("ATT3")
 	if err != nil {
 		t.Errorf("Test failed, can't retrieve '%s', error: %s", "ATT3", err.Error())
 	} else {
-		if actual_3 != "VAL3" {
+		if actual_3.Value != "VAL3" {
 			t.Errorf("Test failed, expected: '%s', got:  '%s'", "VAL3", actual_3)
 		}
 	}
@@ -147,18 +149,17 @@ func TestVirtualRouter(t *testing.T){
 		t.Errorf("Test failed, expected: '%s', got:  '%s'", rename, actual)
 	}
 
-	tmpl = "NAME = vrtemplate\n"+
-		   "CPU = 0.1\n"+
-		   "VROUTER = YES\n"+
-		   "MEMORY = 64\n"
+	vmTmpl := NewVMTemplate()
+	vmTmpl.SetCapacity(0.1, 1, 64)
+	vmTmpl.Dynamic.AddPair("VROUTER", "YES")
 
-	tmpl_id, err := testCtrl.Templates().Create(tmpl)
+	vmTmpl_id, err := testCtrl.Templates().Create("vrtemplate", vmTmpl)
 	if err != nil {
 	    t.Errorf("Test failed:\n" + err.Error())
 	}
 
 	//Instantiate VirtualRouter
-	vrC.Instantiate(1, int(tmpl_id), "vr_test_go", false, "")
+	vrC.Instantiate(1, int(vmTmpl_id), "vr_test_go", false, nil)
 
 	id, err := testCtrl.VMs().ByName("vr_test_go")
 	if err != nil {
@@ -170,20 +171,20 @@ func TestVirtualRouter(t *testing.T){
 	    t.Fatal("Test failed:\n" + err.Error())
 	}
 
-	template := testCtrl.Template(tmpl_id)
+	template := testCtrl.Template(vmTmpl_id)
 
 	template.Delete()
 
-	vn_tmpl := "NAME = \"go-net\"\n"+
-			   "BRIDGE = vbr0\n" +
-			   "VN_MAD = dummy\n"
+	vn_tmpl := NewVirtualNetworkTemplate()
+	vn_tmpl.AddVNMad("dummy")
+	vn_tmpl.Add(BridgeVNK, "vbr0")
+	vnet_id, _ := testCtrl.VirtualNetworks().Create("go-net", vn_tmpl, 0)
 
-	vnet_id, _ := testCtrl.VirtualNetworks().Create(vn_tmpl, 0)
-
-	nic_tmpl := "NIC = [ NETWORK=\"go-net\" ]"
+	nicBuilder := NewNIC()
+	nicBuilder.Add(NetworkNK, "go-net")
 
 	//Attach nic to VirtualRouter
-	err = vrC.AttachNic(nic_tmpl)
+	err = vrC.AttachNic(nicBuilder)
 
 	if err != nil {
 	    t.Errorf("Test failed:\n" + err.Error())
@@ -194,13 +195,16 @@ func TestVirtualRouter(t *testing.T){
 	    t.Errorf("Test failed:\n" + err.Error())
 	}
 
-	if len(vr.Template.NIC) == 0{
-		t.Errorf("Test failed, can't retrieve '%s', error: %s", "NIC", err.Error())
+	actualNICs := vr.Template.Dynamic.GetVectors("NIC")
+	if len(actualNICs) != 1 {
+		t.Errorf("Test failed, does not retrieve the exact number of NICs '%s', count: %d", "NIC", len(actualNICs))
 	} else {
-		actualNetName, _ :=  vr.Template.NIC[0].Dynamic.GetContentByName("NETWORK")
-
-		if actualNetName != "go-net" {
-			t.Errorf("Test failed, expected: '%s', got:  '%s'", "go-net", actualNetName)
+		actualNetName, err := actualNICs[0].GetPair("NETWORK")
+		if err != nil {
+			t.Errorf("Test failed, can't retrieve '%s', error: %s", "NETWORK", err)
+		}
+		if actualNetName.Value != "go-net" {
+			t.Errorf("Test failed, expected: '%s', got:  '%s'", "go-net", actualNetName.Value)
 		}
 	}
 

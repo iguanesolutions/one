@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // SecurityGroupsController is a controller for a pool of Security
@@ -45,19 +46,44 @@ type SecurityGroup struct {
 	OutdatedVMs []int                 `xml:"OUTDATED_VMS>ID"`
 	UpdatingVMs []int                 `xml:"UPDATING_VMS>ID"`
 	ErrorVMs    []int                 `xml:"ERROR_VMS>ID"`
-	Template    securityGroupTemplate `xml:"TEMPLATE"`
+	Template    SecurityGroupTemplate `xml:"TEMPLATE"`
 }
 
-// VirtualRouterTemplate represent the template part of the OpenNebula VirtualRouter
-type securityGroupTemplate struct {
-	Description string              `xml:"DESCRIPTION"`
-	Rules       []SecurityGroupRule `xml:"RULE"`
-	Dynamic     unmatchedTagsSlice  `xml:",any"`
+// SecurityGroupTemplate represent the template part of the OpenNebula SecurityGroup
+type SecurityGroupTemplate struct {
+	DynamicTemplate
 }
 
-type SecurityGroupRule struct {
-	Protocol string `xml:"PROTOCOL"`
-	RuleType string `xml:"RULE_TYPE"`
+type SecurityGroupTemplateKeys string
+
+const (
+	ProtocolSGK  SecurityGroupTemplateKeys = "PROTOCOL"
+	RuleTypeSGK  SecurityGroupTemplateKeys = "RULE_TYPE"
+	IPSGK        SecurityGroupTemplateKeys = "IP"
+	SizeSGK      SecurityGroupTemplateKeys = "SIZE"
+	RangeSGK     SecurityGroupTemplateKeys = "RANGE"
+	IcmpTypeSGK  SecurityGroupTemplateKeys = "ICMP_TYPE"
+	NetworkIDSGK SecurityGroupTemplateKeys = "NETWORK_ID"
+)
+
+// NewSecurityGroupTemplate returns a structure dis entity to build
+func NewSecurityGroupTemplate() *SecurityGroupTemplate {
+	return &SecurityGroupTemplate{}
+}
+
+// Get is a getValue for all SecurityGroupTemplate keys
+func (t *SecurityGroupTemplate) Get(key SecurityGroupTemplateKeys) (string, error) {
+	return t.GetStr(string(key))
+}
+
+// GetRules is a getValue for all SecurityGroupTemplate keys
+func (t *SecurityGroupTemplate) GetRules(key SecurityGroupTemplateKeys) (string, error) {
+	return t.GetStr(string(key))
+}
+
+// Add adds a SecurityGroupTemplate key with value. NOT ALL KEYS SHOULD BE ADDED, see the documentation
+func (t *SecurityGroupTemplate) Add(key SecurityGroupTemplateKeys, value string) error {
+	return t.AddPair(string(key), value)
 }
 
 // SecurityGroups returns a SecurityGroups controller.
@@ -150,8 +176,13 @@ func (sc *SecurityGroupController) Info() (*SecurityGroup, error) {
 
 // Create allocates a new security group. It returns the new security group ID.
 // * tpl: template of the security group
-func (sc *SecurityGroupsController) Create(tpl string) (uint, error) {
-	response, err := sc.c.Client.Call("one.secgroup.allocate", tpl)
+func (sc *SecurityGroupsController) Create(name string, tpl *DynamicTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("SecurityGroup Create: nil template arg")
+	}
+	tpl.SetName(name)
+
+	response, err := sc.c.Client.Call("one.secgroup.allocate", tpl.String())
 	if err != nil {
 		return 0, err
 	}
@@ -175,12 +206,15 @@ func (sc *SecurityGroupController) Delete() error {
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the security group contents.
+// * tpl: The new security group contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (sc *SecurityGroupController) Update(tpl string, uType UpdateType) error {
-	_, err := sc.c.Client.Call("one.secgroup.update", sc.ID, tpl, uType)
+func (sc *SecurityGroupController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("SecuritGroup Update: empty template")
+	}
+	_, err := sc.c.Client.Call("one.secgroup.update", sc.ID, tpl.String(), uType)
 	return err
 }
 

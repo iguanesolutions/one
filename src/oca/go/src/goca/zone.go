@@ -51,7 +51,8 @@ type zoneServer struct {
 }
 
 type zoneTemplate struct {
-	Endpoint string `xml:"ENDPOINT"`
+	Endpoint string             `xml:"ENDPOINT"`
+	Dynamic  dynamicTemplateAny `xml:",any"`
 }
 
 // ZoneServerRaftStatus contains the raft status datas of a server
@@ -153,12 +154,18 @@ func (zc *ZoneController) Info() (*Zone, error) {
 	return zone, nil
 }
 
-// Create allocates a new zone. It returns the new zc.ID.
+// Create allocates a new zone. It returns the new ID.
+// * name: name of the zone
 // * tpl:	A string containing the template of the ZONE. Syntax can be the usual
 //     attribute=value or XML.
 // * clusterID: The id of the cluster. If -1, the default one will be used
-func (zc *ZonesController) Create(tpl string, clusterID int) (uint, error) {
-	response, err := zc.c.Client.Call("one.zone.allocate", tpl, clusterID)
+func (zc *ZonesController) Create(name string, tpl *DynamicTemplate, clusterID int) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("Zone Create: nil template arg")
+	}
+	tpl.SetName(name)
+
+	response, err := zc.c.Client.Call("one.zone.allocate", tpl.String(), clusterID)
 	if err != nil {
 		return 0, err
 	}
@@ -176,8 +183,11 @@ func (zc *ZoneController) Delete() error {
 // * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (zc *ZoneController) Update(tpl string, uType UpdateType) error {
-	_, err := zc.c.Client.Call("one.zone.update", zc.ID, tpl, uType)
+func (zc *ZoneController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("User Update: empty template")
+	}
+	_, err := zc.c.Client.Call("one.zone.update", zc.ID, tpl.String(), uType)
 	return err
 }
 

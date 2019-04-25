@@ -35,29 +35,69 @@ type DatastorePool struct {
 
 // Datastore represents an OpenNebula Datastore
 type Datastore struct {
-	ID          uint              `xml:"ID"`
-	UID         int               `xml:"UID"`
-	GID         int               `xml:"GID"`
-	UName       string            `xml:"UNAME"`
-	GName       string            `xml:"GNAME"`
-	Name        string            `xml:"NAME"`
-	Permissions *Permissions      `xml:"PERMISSIONS"`
-	DSMad       string            `xml:"DS_MAD"`
-	TMMad       string            `xml:"TM_MAD"`
-	BasePath    string            `xml:"BASE_PATH"`
-	Type        string            `xml:"TYPE"`
-	DiskType    string            `xml:"DISK_TYPE"`
-	StateRaw    int               `xml:"STATE"`
-	ClustersID  []int             `xml:"CLUSTERS>ID"`
-	TotalMB     int               `xml:"TOTAL_MB"`
-	FreeMB      int               `xml:"FREE_MB"`
-	UsedMB      int               `xml:"USED_MB"`
-	ImagesID    []int             `xml:"IMAGES>ID"`
-	Template    datastoreTemplate `xml:"TEMPLATE"`
+	ID           uint              `xml:"ID"`
+	UID          int               `xml:"UID"`
+	GID          int               `xml:"GID"`
+	UName        string            `xml:"UNAME"`
+	GName        string            `xml:"GNAME"`
+	Name         string            `xml:"NAME"`
+	Permissions  *Permissions      `xml:"PERMISSIONS"`
+	DSMad        string            `xml:"DS_MAD"`
+	TMMad        string            `xml:"TM_MAD"`
+	BasePath     string            `xml:"BASE_PATH"`
+	Type         string            `xml:"TYPE"`
+	DiskType     string            `xml:"DISK_TYPE"`
+	StateRaw     int               `xml:"STATE"`
+	ClustersID   []int             `xml:"CLUSTERS>ID"`
+	TotalMB      int               `xml:"TOTAL_MB"`
+	FreeMB       int               `xml:"FREE_MB"`
+	UsedMB       int               `xml:"USED_MB"`
+	DatastoresID []int             `xml:"DATASTORES>ID"`
+	Template     DatastoreTemplate `xml:"TEMPLATE"`
 }
 
-type datastoreTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+type DatastoreTemplateKeys string
+
+const (
+	DSMadDK          DatastoreTemplateKeys = "DS_MAD"
+	TMMadDK          DatastoreTemplateKeys = "TM_MAD"
+	SafeDirsDK       DatastoreTemplateKeys = "SAFE_DIRS"
+	RestrictedDirsDK DatastoreTemplateKeys = "RESTRICTED_DIRS"
+	CloneTargetDK    DatastoreTemplateKeys = "CLONE_TARGET"
+	LnTargetDK       DatastoreTemplateKeys = "LN_TARGET"
+)
+
+type DatastoreTypesValues string
+
+const (
+	DsSystem DatastoreTypesValues = "SYSTEM"
+	DsImage  DatastoreTypesValues = "IMAGE"
+	DsFile   DatastoreTypesValues = "FILE"
+)
+
+type DatastoreTemplate struct {
+	DynamicTemplate
+}
+
+// NewDatastoreTemplate returns a structure dis entity to build
+func NewDatastoreTemplate() *DatastoreTemplate {
+	return &DatastoreTemplate{}
+}
+
+// Get is a getValue for all DatastoreTemplate keys
+func (t *DatastoreTemplate) Get(key DatastoreTemplateKeys) (string, error) {
+	return t.GetStr(string(key))
+}
+
+// Add adds a DatastoreTemplate key with value. NOT ALL KEYS SHOULD BE ADDED, see the documentation
+func (t *DatastoreTemplate) Add(key DatastoreTemplateKeys, value string) error {
+	return t.AddPair(string(key), value)
+}
+
+// SetType set an Datastore type
+func (t *DatastoreTemplate) SetType(typ DatastoreTypesValues) error {
+	t.Del(TypeK)
+	return t.AddPair(TypeK, typ)
 }
 
 // DatastoreState is the state of an OpenNebula datastore
@@ -155,10 +195,16 @@ func (dc *DatastoreController) Info() (*Datastore, error) {
 }
 
 // Create allocates a new datastore. It returns the new datastore ID.
+// * name: name of the datastore
 // * tpl: template of the datastore
 // * clusterID: The cluster ID. If it is -1, the default one will be used.
-func (dc *DatastoresController) Create(tpl string, clusterID int) (uint, error) {
-	response, err := dc.c.Client.Call("one.datastore.allocate", tpl, clusterID)
+func (dc *DatastoresController) Create(name string, tpl *DatastoreTemplate, clusterID int) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("Datastore Create: nil template arg")
+	}
+	tpl.SetName(name)
+
+	response, err := dc.c.Client.Call("one.datastore.allocate", tpl.String(), clusterID)
 	if err != nil {
 		return 0, err
 	}
@@ -176,7 +222,10 @@ func (dc *DatastoreController) Delete() error {
 // * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (dc *DatastoreController) Update(tpl string, uType UpdateType) error {
+func (dc *DatastoreController) Update(tpl *DatastoreTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Datastore Update: empty template arg")
+	}
 	_, err := dc.c.Client.Call("one.datastore.update", dc.ID, tpl, uType)
 	return err
 }
@@ -209,7 +258,7 @@ func (dc *DatastoreController) Enable(enable bool) error {
 	return err
 }
 
-// State looks up the state of the image and returns the DatastoreState
+// State looks up the state of the Datastore and returns the DatastoreState
 func (datastore *Datastore) State() (DatastoreState, error) {
 	state := DatastoreState(datastore.StateRaw)
 	if !state.isValid() {

@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // DocumentsController is a controller for documents entities
@@ -37,20 +38,16 @@ type DocumentPool struct {
 
 // Document represents an OpenNebula Document
 type Document struct {
-	ID          uint             `xml:"ID"`
-	UID         int              `xml:"UID"`
-	GID         int              `xml:"GID"`
-	UName       string           `xml:"UNAME"`
-	GName       string           `xml:"GNAME"`
-	Name        string           `xml:"NAME"`
-	Type        string           `xml:"TYPE"`
-	Permissions *Permissions     `xml:"PERMISSIONS"`
-	LockInfos   *Lock            `xml:"LOCK"`
-	Template    documentTemplate `xml:"TEMPLATE"`
-}
-
-type documentTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	ID          uint            `xml:"ID"`
+	UID         int             `xml:"UID"`
+	GID         int             `xml:"GID"`
+	UName       string          `xml:"UNAME"`
+	GName       string          `xml:"GNAME"`
+	Name        string          `xml:"NAME"`
+	Type        string          `xml:"TYPE"`
+	Permissions *Permissions    `xml:"PERMISSIONS"`
+	LockInfos   *Lock           `xml:"LOCK"`
+	Template    DynamicTemplate `xml:"TEMPLATE"`
 }
 
 // Documents returns a Documents controller
@@ -142,8 +139,13 @@ func (dc *DocumentController) Info() (*Document, error) {
 }
 
 // Create allocates a new document. It returns the new document ID.
-func (dc *DocumentsController) Create(tpl string) (uint, error) {
-	response, err := dc.c.Client.Call("one.document.allocate", tpl)
+func (dc *DocumentsController) Create(name string, tpl *DynamicTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("Document Create: nil template arg")
+	}
+	tpl.SetName(name)
+
+	response, err := dc.c.Client.Call("one.document.allocate", tpl.String(), dc.dType)
 	if err != nil {
 		return 0, err
 	}
@@ -164,12 +166,15 @@ func (dc *DocumentController) Delete() error {
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the document contents.
+// * tpl: The new document contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (dc *DocumentController) Update(tpl string, uType UpdateType) error {
-	_, err := dc.c.Client.Call("one.document.update", dc.ID, tpl, uType)
+func (dc *DocumentController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Document Update: empty template")
+	}
+	_, err := dc.c.Client.Call("one.document.update", dc.ID, tpl.String(), uType)
 	return err
 }
 

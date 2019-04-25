@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // GroupsController is a controller for a Groups
@@ -36,11 +37,11 @@ type GroupPool struct {
 
 // Group represents an OpenNebula Group
 type Group struct {
-	ID       uint            `xml:"ID"`
-	Name     string          `xml:"NAME"`
-	UsersID  []int           `xml:"USERS>ID"`
-	AdminsID []int           `xml:"ADMINS>ID"`
-	Template DynamicTemplate `xml:"TEMPLATE"`
+	ID       uint          `xml:"ID"`
+	Name     string        `xml:"NAME"`
+	UsersID  []int         `xml:"USERS>ID"`
+	AdminsID []int         `xml:"ADMINS>ID"`
+	Template groupTemplate `xml:"TEMPLATE"`
 
 	// Variable part between one.grouppool.info and one.group.info
 	quotasList
@@ -48,7 +49,7 @@ type Group struct {
 }
 
 type groupTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	DynamicTemplate
 }
 
 // Groups returns a Groups controller.
@@ -135,11 +136,14 @@ func (gc *GroupController) Delete() error {
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the group contents.
+// * tpl: The new group contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (gc *GroupController) Update(tpl string, uType UpdateType) error {
+func (gc *GroupController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Group Update: empty template")
+	}
 	_, err := gc.c.Client.Call("one.group.update", gc.ID, tpl, uType)
 	return err
 }

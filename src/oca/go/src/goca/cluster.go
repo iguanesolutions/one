@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // ClustersController is a controller for Clusters
@@ -46,7 +47,7 @@ type clusterTemplate struct {
 	// Example of reservation: https://github.com/OpenNebula/addon-storpool/blob/ba9dd3462b369440cf618c4396c266f02e50f36f/misc/reserved.sh
 	ReservedMem string             `xml:"RESERVED_MEM"`
 	ReservedCPU string             `xml:"RESERVED_CPU"`
-	Dynamic     unmatchedTagsSlice `xml:",any"`
+	Dynamic     dynamicTemplateAny `xml:",any"`
 }
 
 // Clusters returns a Clusters controller.
@@ -134,11 +135,14 @@ func (cc *ClusterController) Delete() error {
 }
 
 // Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// * tpl: The new cluster contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (cc *ClusterController) Update(tpl string, uType UpdateType) error {
-	_, err := cc.c.Client.Call("one.cluster.update", cc.ID, tpl, uType)
+func (cc *ClusterController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Cluster Update: nil template arg")
+	}
+	_, err := cc.c.Client.Call("one.cluster.update", cc.ID, tpl.String(), uType)
 	return err
 }
 

@@ -24,20 +24,18 @@ import (
 func TestMarketplaceApp(t *testing.T){
 	var mkt_app_name string = "new_mkt_app"
 	var mkt_app *MarketPlaceApp
-	var mkt_app_tmpl string
+	var mkt_app_tmpl *MarketAppTemplate
 	var mkt_img_id uint
 	var market_id  uint
 	var err error
 
-	mkt_app_tmpl = "NAME= \"" + mkt_app_name + "\"\n" +
-					"TYPE=image\n"
+	mkt_app_tmpl.Add(TypeMKA, "image")
 
 	//Create an image
-	img_tmpl := "NAME = \"test_img_go" + "\"\n" +
-	"TYPE = DATABLOCK\n" +
-	"SIZE = 1\n"
+	imageTpl := NewImageTemplate()
+	imageTpl.Add(SizeIK, "1")
 
-	mkt_img_id, err = testCtrl.Images().Create(img_tmpl, 1)
+	mkt_img_id, err = testCtrl.Images().Create("test_img_go", ImgDatablock, 1, imageTpl)
 	if err != nil {
 	    t.Fatalf("Test failed:\n" + err.Error())
 	}
@@ -55,24 +53,24 @@ func TestMarketplaceApp(t *testing.T){
 	    t.Errorf("Test failed:\n" + err.Error())
 	}
 
-	mkt_app_tmpl += "ORIGIN_ID=" + strconv.Itoa(int(mkt_img_id)) + "\n"
+	mkt_app_tmpl.Add(OriginIDMKA, strconv.Itoa(int(mkt_img_id)))
 
 	//Create a marketplace
-	mkt_tmpl := "NAME = \"mkt-app-test\"\n" +
-	"MARKET_MAD = \"http\"\n" +
-	"BASE_URL = \"http://url/\"\n" +
-	"PUBLIC_DIR = \"/var/loca/market-http\"\n"
+	mkt_tmpl := NewMarketTemplate()
+	mkt_tmpl.Add(MarketMadMK, "http")
+	mkt_tmpl.Add(BaseUrlMK, "http://url/")
+	mkt_tmpl.Add(PublicDirMK, "/var/loca/market-http")
 
-	market_id, err = testCtrl.MarketPlaces().Create(mkt_tmpl)
+	market_id, err = testCtrl.MarketPlaces().Create("mkt-app-test", mkt_tmpl)
 
 	if err != nil {
 	    t.Errorf("Test failed:\n" + err.Error())
 	}
 
-	mkt_app_tmpl += "MARKETPLACE_ID=\"" + strconv.Itoa(int(market_id)) + "\"\n"
+	mkt_app_tmpl.Add(MarketIDMKA, strconv.Itoa(int(market_id)))
 
 	//Create MarketplaceApp
-	app_id, err := testCtrl.MarketPlaceApps().Create(mkt_app_tmpl, int(market_id))
+	app_id, err := testCtrl.MarketPlaceApps().Create(mkt_app_name, mkt_app_tmpl, int(market_id))
 
 	if err != nil {
 	    t.Errorf("Test failed:\n" + err.Error())

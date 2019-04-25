@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // UsersController is a controller for a pool of Users
@@ -53,7 +54,7 @@ type User struct {
 }
 
 type userTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	DynamicTemplate
 }
 
 type loginToken struct {
@@ -167,12 +168,15 @@ func (uc *UserController) Login(token string, timeSeconds int, effectiveGID int)
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the user contents.
+// * tpl: The new user contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (uc *UserController) Update(tpl string, uType UpdateType) error {
-	_, err := uc.c.Client.Call("one.user.update", uc.ID, tpl, uType)
+func (uc *UserController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("User Update: nil template")
+	}
+	_, err := uc.c.Client.Call("one.user.update", uc.ID, tpl.String(), uType)
 	return err
 }
 

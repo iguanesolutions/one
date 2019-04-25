@@ -65,11 +65,7 @@ type Image struct {
 	ClonesID        []int         `xml:"CLONES>ID"`
 	AppClonesID     []int         `xml:"APP_CLONES>ID"`
 	Snapshots       ImageSnapshot `xml:"SNAPSHOTS"`
-	Template        imageTemplate `xml:"TEMPLATE"`
-}
-
-type imageTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Template        ImageTemplate `xml:"TEMPLATE"`
 }
 
 // ImageState is the state of the Image
@@ -223,8 +219,14 @@ func (ic *ImageController) Info() (*Image, error) {
 
 // Create allocates a new image based on the template string provided. It
 // returns the image ID.
-func (ic *ImagesController) Create(template string, dsid uint) (uint, error) {
-	response, err := ic.c.Client.Call("one.image.allocate", template, dsid)
+func (ic *ImagesController) Create(name string, itype ImageTypesValues, dsid uint, tpl *ImageTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("Image Create: nil template arg")
+	}
+	tpl.SetName(name)
+	tpl.SetType(itype)
+
+	response, err := ic.c.Client.Call("one.image.allocate", tpl.String(), dsid)
 	if err != nil {
 		return 0, err
 	}
@@ -260,11 +262,14 @@ func (ic *ImageController) Clone(cloneName string, dsid int) (uint, error) {
 	return uint(response.BodyInt()), nil
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the image contents.
+// * tpl: The new image contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (ic *ImageController) Update(tpl string, uType UpdateType) error {
+func (ic *ImageController) Update(tpl *ImageTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Image Update: nil template")
+	}
 	_, err := ic.c.Client.Call("one.image.update", ic.ID, tpl, uType)
 	return err
 }

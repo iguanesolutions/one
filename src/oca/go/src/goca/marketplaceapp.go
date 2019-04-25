@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // MarketPlaceAppsController is a controller for a pool of MarketPlaceApps
@@ -34,33 +35,56 @@ type MarketPlaceAppPool struct {
 
 // MarketPlaceApp represents an OpenNebula MarketPlaceApp
 type MarketPlaceApp struct {
-	ID            uint                   `xml:"ID"`
-	UID           int                    `xml:"UID"`
-	GID           int                    `xml:"GID"`
-	UName         string                 `xml:"UNAME"`
-	GName         string                 `xml:"GNAME"`
-	LockInfos     *Lock                  `xml:"LOCK"`
-	Permissions   *Permissions           `xml:"PERMISSIONS"`
-	RegTime       int                    `xml:"REGTIME"`
-	Name          string                 `xml:"NAME"`
-	ZoneID        string                 `xml:"ZONE_ID"`
-	OriginID      string                 `xml:"ORIGIN_ID"`
-	Source        string                 `xml:"SOURCE"`
-	MD5           string                 `xml:"MD5"`
-	Size          int                    `xml:"SIZE"`
-	Description   string                 `xml:"DESCRIPTION"`
-	Version       string                 `xml:"VERSION"`
-	Format        string                 `xml:"FORMAT"`
-	AppTemplate64 string                 `xml:"APPTEMPLATE64"`
-	MarketPlaceID int                    `xml:"MARKETPLACEID"`
-	MarketPlace   string                 `xml:"MARKETPLACE"`
-	State         int                    `xml:"STATE"`
-	Type          int                    `xml:"TYPE"`
-	Template      marketPlaceAppTemplate `xml:"TEMPLATE"`
+	ID            uint              `xml:"ID"`
+	UID           int               `xml:"UID"`
+	GID           int               `xml:"GID"`
+	UName         string            `xml:"UNAME"`
+	GName         string            `xml:"GNAME"`
+	LockInfos     *Lock             `xml:"LOCK"`
+	Permissions   *Permissions      `xml:"PERMISSIONS"`
+	RegTime       int               `xml:"REGTIME"`
+	Name          string            `xml:"NAME"`
+	ZoneID        string            `xml:"ZONE_ID"`
+	OriginID      string            `xml:"ORIGIN_ID"`
+	Source        string            `xml:"SOURCE"`
+	MD5           string            `xml:"MD5"`
+	Size          int               `xml:"SIZE"`
+	Description   string            `xml:"DESCRIPTION"`
+	Version       string            `xml:"VERSION"`
+	Format        string            `xml:"FORMAT"`
+	AppTemplate64 string            `xml:"APPTEMPLATE64"`
+	MarketPlaceID int               `xml:"MARKETPLACEID"`
+	MarketPlace   string            `xml:"MARKETPLACE"`
+	State         int               `xml:"STATE"`
+	Type          int               `xml:"TYPE"`
+	Template      MarketAppTemplate `xml:"TEMPLATE"`
 }
 
-type marketPlaceAppTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:,any`
+type MarketAppTplKeys string
+
+const (
+	TypeMKA     MarketAppTplKeys = "TYPE"
+	OriginIDMKA MarketAppTplKeys = "ORIGIN_ID"
+	MarketIDMKA MarketAppTplKeys = "MARKETPLACE_ID"
+)
+
+type MarketAppTemplate struct {
+	DynamicTemplate
+}
+
+// NewMarketAppTemplate returns a structure dis entity to build
+func NewMarketAppTemplate() *MarketAppTemplate {
+	return &MarketAppTemplate{}
+}
+
+// Get return the string value of a MarketAppTemplate keys
+func (t *MarketAppTemplate) Get(key MarketAppTplKeys) (string, error) {
+	return t.GetStr(string(key))
+}
+
+// Add adds a MarketAppTemplate key with value. NOT ALL KEYS SHOULD BE ADDED, see the documentation
+func (t *MarketAppTemplate) Add(key MarketAppTplKeys, value string) error {
+	return t.AddPair(string(key), value)
 }
 
 // MarketPlaceApps returns a MarketPlaceApps controller
@@ -152,10 +176,16 @@ func (mc *MarketPlaceAppController) Info() (*MarketPlaceApp, error) {
 }
 
 // Create allocates a new marketplace app. It returns the new marketplace app ID.
+// * name: name of the app
 // * tpl: template of the marketplace app
 // * market: market place ID
-func (mc *MarketPlaceAppsController) Create(tpl string, market int) (uint, error) {
-	response, err := mc.c.Client.Call("one.marketapp.allocate", tpl, market)
+func (mc *MarketPlaceAppsController) Create(name string, tpl *MarketAppTemplate, marketID int) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("MarketPlaceApp Create: nil template arg")
+	}
+	tpl.SetName(name)
+
+	response, err := mc.c.Client.Call("one.marketapp.allocate", tpl.String(), marketID)
 	if err != nil {
 		return 0, err
 	}
@@ -176,12 +206,15 @@ func (mc *MarketPlaceAppController) Enable(enable bool) error {
 	return err
 }
 
-// Update replaces the cluster cluster contents.
-// * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
+// Update replaces the marketplaceapp contents.
+// * tpl: The new marketplaceapp contents.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (mc *MarketPlaceAppController) Update(tpl string, uType UpdateType) error {
-	_, err := mc.c.Client.Call("one.marketapp.update", mc.ID, tpl, uType)
+func (mc *MarketPlaceAppController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Datasore Update: nil template")
+	}
+	_, err := mc.c.Client.Call("one.marketapp.update", mc.ID, tpl.String(), uType)
 	return err
 }
 

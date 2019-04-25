@@ -21,6 +21,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // VNTemplatesController is a controller for a pool of VNTemplate
@@ -45,12 +46,12 @@ type VNTemplate struct {
 	LockInfos   *Lock              `xml:"LOCK"`
 	Permissions Permissions        `xml:"PERMISSIONS"`
 	RegTime     string             `xml:"REGTIME"`
-	Template    vnTemplateTemplate `xml:"TEMPLATE"`
+	Template    VNTemplateTemplate `xml:"TEMPLATE"`
 }
 
-type vnTemplateTemplate struct {
+type VNTemplateTemplate struct {
 	VNMad   string             `xml:"VN_MAD"`
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	Dynamic dynamicTemplateAny `xml:",any"`
 }
 
 // VNTemplates returns a VNTemplates controller.
@@ -139,8 +140,13 @@ func (vc *VNTemplateController) Info() (*VNTemplate, error) {
 }
 
 // Create allocates a new vntemplate. It returns the new vntemplate ID.
-func (vc *VNTemplateController) Create(vntemplate string) (uint, error) {
-	response, err := vc.c.Client.Call("one.vntemplate.allocate", vntemplate)
+func (vc *VNTemplateController) Create(name string, tpl *VirtualNetworkTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("VirtualRouter Create: nil template arg")
+	}
+	tpl.Dynamic.SetName(name)
+
+	response, err := vc.c.Client.Call("one.vntemplate.allocate", tpl)
 	if err != nil {
 		return 0, err
 	}
@@ -152,7 +158,10 @@ func (vc *VNTemplateController) Create(vntemplate string) (uint, error) {
 // * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (vc *VNTemplateController) Update(tpl *VNetTemplate, uType int) error {
+func (vc *VNTemplateController) Update(tpl *VirtualNetworkTemplate, uType int) error {
+	if tpl == nil {
+		return fmt.Errorf("VNTemplate Update: nil template")
+	}
 	_, err := vc.c.Client.Call("one.vntemplate.update", vc.ID, tpl, uType)
 	return err
 }
@@ -184,8 +193,12 @@ func (vc *VNTemplateController) Delete() error {
 }
 
 // Instantiate will instantiate the template
-func (vc *VNTemplateController) Instantiate(name string, extra string) (uint, error) {
-	response, err := vc.c.Client.Call("one.vntemplate.instantiate", vc.ID, name, extra)
+func (vc *VNTemplateController) Instantiate(name string, extraTpl *VirtualNetworkTemplate) (uint, error) {
+	tplStr := ""
+	if extraTpl != nil {
+		tplStr = extraTpl.String()
+	}
+	response, err := vc.c.Client.Call("one.vntemplate.instantiate", vc.ID, name, tplStr)
 
 	if err != nil {
 		return 0, err

@@ -34,30 +34,31 @@ type VMSuite struct {
 var _ = Suite(&VMSuite{})
 
 func (s *VMSuite) SetUpSuite(c *C) {
+
+	name := GenName("VMSuite-template")
+
 	// Create template
-	tpl := NewTemplateBuilder()
+	tpl := NewVMTemplate()
+	tpl.SetCapacity(1, 1, 64)
 
-	tpl.AddValue("NAME", GenName("VMSuite-template"))
-	tpl.AddValue("CPU", 1)
-	tpl.AddValue("MEMORY", "64")
-
-	templateID, err := testCtrl.Templates().Create(tpl.String())
+	templateID, err := testCtrl.Templates().Create(name, tpl)
 	c.Assert(err, IsNil)
 
 	s.templateID = templateID
 
 	s.hostID, _ = testCtrl.Hosts().Create("dummy-test", "dummy", "dummy", 0)
 
-	tmpl := "TM_MAD=dummy\nDS_MAD=dummy"
+	tmpl := NewDatastoreTemplate()
+	tmpl.Add(TMMadDK, "dummy")
+	tmpl.Add(DSMadDK, "dummy")
 
 	testCtrl.Datastore(1).Update(tmpl, 1)
-
 	testCtrl.Datastore(0).Update(tmpl, 1)
 
 }
 
 func (s *VMSuite) SetUpTest(c *C) {
-	vmID, err := testCtrl.Template(s.templateID).Instantiate("", true, "", false)
+	vmID, err := testCtrl.Template(s.templateID).Instantiate("", true, nil, false)
 	c.Assert(err, IsNil)
 	s.vmID = vmID
 }
@@ -129,14 +130,17 @@ func (s *VMSuite) TestVMHoldRelease(c *C) {
 
 func (s *VMSuite) TestVMUpdate(c *C) {
 	vmC := testCtrl.VM(s.vmID)
-	err := vmC.Update("A=B", 1)
+	tmpl := NewVMTemplate()
+	tmpl.Dynamic.AddPair("A", "B")
+	err := vmC.Update(tmpl, Merge)
 	c.Assert(err, IsNil)
 
 	vm, err := vmC.Info()
 	c.Assert(err, IsNil)
 
-	val := vm.UserTemplate.Dynamic.GetContentByName("A")
-	c.Assert(val, Equals, "B")
+	pair, err := vm.UserTemplate.Dynamic.GetPair("A")
+	c.Assert(err, IsNil)
+	c.Assert(pair.Value, Equals, "B")
 }
 
 // TODO: Hosts

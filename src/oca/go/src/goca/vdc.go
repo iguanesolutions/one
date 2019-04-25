@@ -19,6 +19,7 @@ package goca
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 )
 
 // VdcsController is a controller for a pool of Vdcs
@@ -45,7 +46,7 @@ type Vdc struct {
 }
 
 type vdcTemplate struct {
-	Dynamic unmatchedTagsSlice `xml:",any"`
+	DynamicTemplate
 }
 
 type vdcCluster struct {
@@ -138,12 +139,18 @@ func (vc *VdcController) Info() (*Vdc, error) {
 }
 
 // Create allocates a new vdc. It returns the new vdc ID.
+// * name:  The name of the Vdc
 // * tpl:	A string containing the template of the VDC. Syntax can be the usual
 //     attribute=value or XML.
 // * clusterID: The cluster ID. If it is -1, this virtual network won’t be added
 //     to any cluster
-func (vc *VdcsController) Create(tpl string, clusterID int) (uint, error) {
-	response, err := vc.c.Client.Call("one.vdc.allocate", tpl, clusterID)
+func (vc *VdcsController) Create(name string, clusterID int, tpl *DynamicTemplate) (uint, error) {
+	if tpl == nil {
+		return 0, fmt.Errorf("Vdc Create: nil template arg")
+	}
+	tpl.SetName(name)
+
+	response, err := vc.c.Client.Call("one.vdc.allocate", tpl.String(), clusterID)
 	if err != nil {
 		return 0, err
 	}
@@ -161,8 +168,11 @@ func (vc *VdcController) Delete() error {
 // * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (vc *VdcController) Update(tpl string, uType UpdateType) error {
-	_, err := vc.c.Client.Call("one.vdc.update", vc.ID, tpl, uType)
+func (vc *VdcController) Update(tpl *DynamicTemplate, uType UpdateType) error {
+	if tpl == nil {
+		return fmt.Errorf("Vdc Update: empty template")
+	}
+	_, err := vc.c.Client.Call("one.vdc.update", vc.ID, tpl.String(), uType)
 	return err
 }
 
