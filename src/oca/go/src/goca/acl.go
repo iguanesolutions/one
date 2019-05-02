@@ -33,9 +33,14 @@ type ACLPool struct {
 	String   string `xml:"STRING"`
 }
 
-// ACLPool returns an acl pool. A connection to OpenNebula is
+// ACLs returns a hosts controller.
+func (c *Controller) ACLs() *ACLsController {
+	return &ACLsController{c}
+}
+
+// Info returns an acl pool. A connection to OpenNebula is
 // performed.
-func (ac *ACLsController) ACLPool() (*ACLPool, error) {
+func (ac *ACLsController) Info() (*ACLPool, error) {
 	response, err := ac.c.Client.Call("one.acl.info")
 	if err != nil {
 		return nil, err
