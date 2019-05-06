@@ -53,15 +53,11 @@ type VirtualNetwork struct {
 	OuterVlanIDAutomatic string       `xml:"OUTER_VLAN_ID_AUTOMATIC"`
 	UsedLeases           int          `xml:"USED_LEASES"`
 	VRoutersID           []int        `xml:"VROUTERS>ID"`
-	Template             vnetTemplate `xml:"TEMPLATE"`
+	Template             VNetTemplate `xml:"TEMPLATE"`
 
 	// Variable parts between one.vnpool.info and one.vn.info
 	ARs  []VirtualNetworkAR `xml:"AR_POOL>AR"`
 	Lock *Lock              `xml:"LOCK"`
-}
-
-type vnetTemplate struct {
-	Dynamic DynamicTemplate `xml:",any"`
 }
 
 type VirtualNetworkAR struct {
@@ -175,7 +171,7 @@ func (vc *VirtualNetworkController) Info() (*VirtualNetwork, error) {
 // Create allocates a new virtualnetwork. It returns the new virtualnetwork ID.
 // * tpl: template of the virtualnetwork
 // * clusterID: The cluster ID. If it is -1, the default one will be used.
-func (vc *VirtualNetworksController) Create(tpl string, clusterID int) (uint, error) {
+func (vc *VirtualNetworksController) Create(tpl *VNetTemplate, clusterID int) (uint, error) {
 	response, err := vc.c.Client.Call("one.vn.allocate", tpl, clusterID)
 	if err != nil {
 		return 0, err
@@ -192,8 +188,8 @@ func (vc *VirtualNetworkController) Delete() error {
 
 // AddAr adds address ranges to a virtual network.
 // * tpl: template of the address ranges to add. Syntax can be the usual attribute=value or XML
-func (vc *VirtualNetworkController) AddAr(tpl string) error {
-	_, err := vc.c.Client.Call("one.vn.add_ar", vc.ID, tpl)
+func (vc *VirtualNetworkController) AddAr(tpl *AddressRange) error {
+	_, err := vc.c.Client.Call("one.vn.add_ar", vc.ID, tpl.String())
 	return err
 }
 
@@ -243,7 +239,7 @@ func (vc *VirtualNetworkController) Release(tpl string) error {
 // * tpl: The new cluster contents. Syntax can be the usual attribute=value or XML.
 // * uType: Update type: Replace: Replace the whole template.
 //   Merge: Merge new template with the existing one.
-func (vc *VirtualNetworkController) Update(tpl string, uType UpdateType) error {
+func (vc *VirtualNetworkController) Update(tpl *VNetTemplate, uType UpdateType) error {
 	_, err := vc.c.Client.Call("one.vn.update", vc.ID, tpl, uType)
 	return err
 }

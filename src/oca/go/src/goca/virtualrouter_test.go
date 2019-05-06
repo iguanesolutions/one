@@ -175,10 +175,10 @@ func TestVirtualRouter(t *testing.T){
 
 	template.Delete()
 
-	vn_tmpl := "NAME = \"go-net\"\n"+
-			   "BRIDGE = vbr0\n" +
-			   "VN_MAD = dummy\n"
-
+	vn_tmpl := NewVNetTemplate()
+	vn_tmpl.Add(NameVNK, "go-net")
+	vn_tmpl.AddVNMad("dummy")
+	vn_tmpl.Add(BridgeVNK, "vbr0")
 	vnet_id, _ := testCtrl.VirtualNetworks().Create(vn_tmpl, 0)
 
 	nicBuilder := NewNIC()

@@ -128,7 +128,7 @@ func (vc *VNTemplateController) Info() (*VNTemplate, error) {
 }
 
 // Create allocates a new vntemplate. It returns the new vntemplate ID.
-func (vc *VNTemplateController) Create(vntemplate string) (uint, error) {
+func (vc *VNTemplateController) Create(vntemplate *VNetTemplate) (uint, error) {
 	response, err := vc.c.Client.Call("one.vntemplate.allocate", vntemplate)
 	if err != nil {
 		return 0, err
@@ -173,7 +173,7 @@ func (vc *VNTemplateController) Delete() error {
 }
 
 // Instantiate will instantiate the template
-func (vc *VNTemplateController) Instantiate(name string, extra string) (uint, error) {
+func (vc *VNTemplateController) Instantiate(name string, extra *VNetTemplate) (uint, error) {
 	response, err := vc.c.Client.Call("one.vntemplate.instantiate", vc.ID, name, extra)
 
 	if err != nil {

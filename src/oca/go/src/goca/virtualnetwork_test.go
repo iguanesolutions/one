@@ -21,17 +21,15 @@ import (
     "strings"
 )
 
-var vnTpl = `
-NAME = "vntest"
-BRIDGE = "vnetbr"
-PHYDEV = "eth0"
-SECURITY_GROUPS = 0
-VLAN_ID = 8000042
-VN_MAD = "vxlan"
-`
-
 // Helper to create a Virtual Network
 func createVirtualNetwork(t *testing.T) (*VirtualNetwork, uint) {
+	vnTpl := NewVNetTemplate()
+	vnTpl.Add(NameVNK, "vntest")
+	vnTpl.Add(BridgeVNK, "vnetbr")
+	vnTpl.Add(PhyDevVNK, "eth0")
+	vnTpl.Add(SecGroupsVNK, "0")
+	vnTpl.Add(VlanIDVNK, "8000042")
+	vnTpl.Add(VNMadVNK, "vxlan")
 	id, err := testCtrl.VirtualNetworks().Create(vnTpl, -1)
 	if err != nil {
 		t.Fatal(err)
