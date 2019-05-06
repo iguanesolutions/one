@@ -21,12 +21,6 @@ import (
     "strings"
 )
 
-var imageTpl = `
-NAME = "test-image"
-SIZE = 1
-TYPE = "DATABLOCK"
-`
-
 func ImageExpectState(imageC *ImageController, state string) func() bool {
 	return func() bool {
 		image, err := imageC.Info()
@@ -49,7 +43,12 @@ func ImageExpectState(imageC *ImageController, state string) func() bool {
 
 // Helper to create a Image
 func createImage(t *testing.T) (*Image, uint) {
-    // Datastore ID 1 means default for image
+	imageTpl := NewImageTemplate()
+	imageTpl.Add(NameIK, "test-image")
+	imageTpl.Add(SizeIK, "1")
+	imageTpl.Add(TypeIK, "DATABLOCK")
+
+	// Datastore ID 1 means default for image
 	id, err := testCtrl.Images().Create(imageTpl, 1)
 	if err != nil {
 		t.Fatal(err)

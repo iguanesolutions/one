@@ -33,11 +33,12 @@ func TestMarketplaceApp(t *testing.T){
 					"TYPE=image\n"
 
 	//Create an image
-	img_tmpl := "NAME = \"test_img_go" + "\"\n" +
-	"TYPE = DATABLOCK\n" +
-	"SIZE = 1\n"
+	imageTpl := NewImageTemplate()
+	imageTpl.Add(NameIK, "test_img_go")
+	imageTpl.Add(TypeIK, "DATABLOCK")
+	imageTpl.Add(SizeIK, "1")
 
-	mkt_img_id, err = testCtrl.Images().Create(img_tmpl, 1)
+	mkt_img_id, err = testCtrl.Images().Create(imageTpl, 1)
 	if err != nil {
 	    t.Fatalf("Test failed:\n" + err.Error())
 	}
