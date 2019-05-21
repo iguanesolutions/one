@@ -38,7 +38,7 @@ type ImagePool struct {
 
 // Image represents an OpenNebula Image
 type Image struct {
-	ID              uint          `xml:"ID"`
+	ID              int           `xml:"ID"`
 	UID             int           `xml:"UID"`
 	GID             int           `xml:"GID"`
 	UName           string        `xml:"UNAME"`
@@ -136,18 +136,18 @@ func (c *Controller) Images() *ImagesController {
 }
 
 // Image returns an Image controller
-func (c *Controller) Image(id uint) *ImageController {
+func (c *Controller) Image(id int) *ImageController {
 	return &ImageController{c, id}
 }
 
 // Snapshot returns an Image snapshot controller
-func (ic *ImageController) Snapshot(id uint) *ImageSnapshotController {
+func (ic *ImageController) Snapshot(id int) *ImageSnapshotController {
 	return &ImageSnapshotController{ic.c, ic.ID, id}
 }
 
 // ByName returns an Image ID from name
-func (c *ImagesController) ByName(name string, args ...int) (uint, error) {
-	var id uint
+func (c *ImagesController) ByName(name string, args ...int) (int, error) {
+	var id int
 
 	imagePool, err := c.Info(args...)
 	if err != nil {
@@ -219,7 +219,7 @@ func (ic *ImageController) Info() (*Image, error) {
 
 // Create allocates a new image based on the template string provided. It
 // returns the image ID.
-func (ic *ImagesController) Create(name string, itype ImageTypesValues, dsid uint, tpl *ImageTemplate) (uint, error) {
+func (ic *ImagesController) Create(name string, itype ImageTypesValues, dsid int, tpl *ImageTemplate) (int, error) {
 	if tpl == nil {
 		return 0, fmt.Errorf("Image Create: nil template arg")
 	}
@@ -231,7 +231,7 @@ func (ic *ImagesController) Create(name string, itype ImageTypesValues, dsid uin
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // State looks up the state of the image and returns the ImageState
@@ -253,13 +253,13 @@ func (image *Image) StateString() (string, error) {
 }
 
 // Clone clones an existing image. It returns the clone ID
-func (ic *ImageController) Clone(cloneName string, dsid int) (uint, error) {
+func (ic *ImageController) Clone(cloneName string, dsid int) (int, error) {
 	response, err := ic.c.Client.Call("one.image.clone", ic.ID, cloneName, dsid)
 	if err != nil {
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Update replaces the image contents.

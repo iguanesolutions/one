@@ -39,7 +39,7 @@ type Permissions struct {
 }
 
 // If a bit is set to -1, it will not change when calling Chmod
-func (p *Permissions) toArgs(id uint) []interface{} {
+func (p *Permissions) toArgs(id int) []interface{} {
 	return []interface{}{
 		id,
 		p.OwnerU, p.OwnerM, p.OwnerA,

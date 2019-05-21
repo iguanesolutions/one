@@ -37,7 +37,7 @@ type VNTemplatePool struct {
 
 // VNTemplate represents an OpenNebula Virtual Network Template
 type VNTemplate struct {
-	ID          uint               `xml:"ID"`
+	ID          int                `xml:"ID"`
 	UID         int                `xml:"UID"`
 	GID         int                `xml:"GID"`
 	UName       string             `xml:"UNAME"`
@@ -60,13 +60,13 @@ func (c *Controller) VNTemplates() *VNTemplatesController {
 }
 
 // VNTemplate return an VNTemplate controller.
-func (c *Controller) VNTemplate(id uint) *VNTemplateController {
+func (c *Controller) VNTemplate(id int) *VNTemplateController {
 	return &VNTemplateController{c, id}
 }
 
 // ByName returns a VNTemplate id from name
-func (c *VNTemplatesController) ByName(name string) (uint, error) {
-	var id uint
+func (c *VNTemplatesController) ByName(name string) (int, error) {
+	var id int
 
 	vnTemplatePool, err := c.Info()
 	if err != nil {
@@ -140,7 +140,7 @@ func (vc *VNTemplateController) Info() (*VNTemplate, error) {
 }
 
 // Create allocates a new vntemplate. It returns the new vntemplate ID.
-func (vc *VNTemplateController) Create(name string, tpl *VirtualNetworkTemplate) (uint, error) {
+func (vc *VNTemplateController) Create(name string, tpl *VirtualNetworkTemplate) (int, error) {
 	if tpl == nil {
 		return 0, fmt.Errorf("VirtualRouter Create: nil template arg")
 	}
@@ -151,7 +151,7 @@ func (vc *VNTemplateController) Create(name string, tpl *VirtualNetworkTemplate)
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Update replaces the cluster cluster contents.
@@ -193,7 +193,7 @@ func (vc *VNTemplateController) Delete() error {
 }
 
 // Instantiate will instantiate the template
-func (vc *VNTemplateController) Instantiate(name string, extraTpl *VirtualNetworkTemplate) (uint, error) {
+func (vc *VNTemplateController) Instantiate(name string, extraTpl *VirtualNetworkTemplate) (int, error) {
 	tplStr := ""
 	if extraTpl != nil {
 		tplStr = extraTpl.String()
@@ -204,7 +204,7 @@ func (vc *VNTemplateController) Instantiate(name string, extraTpl *VirtualNetwor
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Clone an existing vntemplate.

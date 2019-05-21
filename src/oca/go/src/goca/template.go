@@ -35,7 +35,7 @@ type TemplatePool struct {
 
 // Template represents an OpenNebula Template
 type Template struct {
-	ID          uint         `xml:"ID"`
+	ID          int          `xml:"ID"`
 	UID         int          `xml:"UID"`
 	GID         int          `xml:"GID"`
 	UName       string       `xml:"UNAME"`
@@ -57,13 +57,13 @@ func (c *Controller) Templates() *TemplatesController {
 }
 
 // Template returns a Template controller
-func (c *Controller) Template(id uint) *TemplateController {
+func (c *Controller) Template(id int) *TemplateController {
 	return &TemplateController{c, id}
 }
 
 // ByName returns a Template by Name
-func (c *TemplatesController) ByName(name string, args ...int) (uint, error) {
-	var id uint
+func (c *TemplatesController) ByName(name string, args ...int) (int, error) {
+	var id int
 
 	templatePool, err := c.Info(args...)
 	if err != nil {
@@ -136,7 +136,7 @@ func (tc *TemplateController) Info() (*Template, error) {
 }
 
 // Create allocates a new template. It returns the new template ID.
-func (tc *TemplatesController) Create(name string, tpl *VMTemplate) (uint, error) {
+func (tc *TemplatesController) Create(name string, tpl *VMTemplate) (int, error) {
 	if tpl == nil {
 		return 0, fmt.Errorf("Template Create: nil template arg")
 	}
@@ -147,7 +147,7 @@ func (tc *TemplatesController) Create(name string, tpl *VMTemplate) (uint, error
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Update replaces the template contents.
@@ -189,7 +189,7 @@ func (tc *TemplateController) Delete() error {
 }
 
 // Instantiate will instantiate the template
-func (tc *TemplateController) Instantiate(name string, pending bool, tpl *VMTemplate, clone bool) (uint, error) {
+func (tc *TemplateController) Instantiate(name string, pending bool, tpl *VMTemplate, clone bool) (int, error) {
 	tplStr := ""
 	if tpl != nil {
 		tplStr = tpl.String()
@@ -199,7 +199,7 @@ func (tc *TemplateController) Instantiate(name string, pending bool, tpl *VMTemp
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Clone an existing template. If recursive is true it will clone the template

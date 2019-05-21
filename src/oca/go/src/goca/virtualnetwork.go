@@ -35,7 +35,7 @@ type VirtualNetworkPool struct {
 
 // VirtualNetwork represents an OpenNebula VirtualNetwork
 type VirtualNetwork struct {
-	ID                   uint                   `xml:"ID"`
+	ID                   int                    `xml:"ID"`
 	UID                  int                    `xml:"UID"`
 	GID                  int                    `xml:"GID"`
 	UName                string                 `xml:"UNAME"`
@@ -104,13 +104,13 @@ func (c *Controller) VirtualNetworks() *VirtualNetworksController {
 }
 
 // VirtualNetwork returns a VirtualNetwork controller
-func (c *Controller) VirtualNetwork(id uint) *VirtualNetworkController {
+func (c *Controller) VirtualNetwork(id int) *VirtualNetworkController {
 	return &VirtualNetworkController{c, id}
 }
 
 // ByName returns a VirtualNetwork ID from name
-func (c *VirtualNetworksController) ByName(name string, args ...int) (uint, error) {
-	var id uint
+func (c *VirtualNetworksController) ByName(name string, args ...int) (int, error) {
+	var id int
 
 	virtualNetworkPool, err := c.Info(args...)
 	if err != nil {
@@ -188,7 +188,7 @@ func (vc *VirtualNetworkController) Info() (*VirtualNetwork, error) {
 // * name: the name of the virtualnetwork
 // * tpl: template of the virtualnetwork
 // * clusterID: The cluster ID. If it is -1, the default one will be used.
-func (vc *VirtualNetworksController) Create(name string, tpl *VirtualNetworkTemplate, clusterID int) (uint, error) {
+func (vc *VirtualNetworksController) Create(name string, tpl *VirtualNetworkTemplate, clusterID int) (int, error) {
 	if tpl == nil {
 		return 0, fmt.Errorf("VirtualNetwork Create: nil template arg")
 	}
@@ -199,7 +199,7 @@ func (vc *VirtualNetworksController) Create(name string, tpl *VirtualNetworkTemp
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Delete deletes the given virtual network from the pool.

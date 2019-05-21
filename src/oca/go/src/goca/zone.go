@@ -30,7 +30,7 @@ type ZoneController entityController
 
 // ZonePool represents an OpenNebula ZonePool
 type ZonePool struct {
-	ID         uint         `xml:"ZONE>ID"`
+	ID         int          `xml:"ZONE>ID"`
 	Name       string       `xml:"ZONE>NAME"`
 	Template   zoneTemplate `xml:"ZONE>TEMPLATE"`
 	ServerPool []zoneServer `xml:"ZONE>SERVER_POOL>SERVER"`
@@ -38,7 +38,7 @@ type ZonePool struct {
 
 // Zone represents an OpenNebula Zone
 type Zone struct {
-	ID         uint         `xml:"ID"`
+	ID         int          `xml:"ID"`
 	Name       string       `xml:"NAME"`
 	Template   zoneTemplate `xml:"TEMPLATE"`
 	ServerPool []zoneServer `xml:"SERVER_POOL>SERVER"`
@@ -105,12 +105,12 @@ func (c *Controller) Zones() *ZonesController {
 }
 
 // Zone returns a Zone controller
-func (c *Controller) Zone(id uint) *ZoneController {
+func (c *Controller) Zone(id int) *ZoneController {
 	return &ZoneController{c, id}
 }
 
 // ByName returns a zone id from name
-func (c *ZonesController) ByName(name string) (uint, error) {
+func (c *ZonesController) ByName(name string) (int, error) {
 	zonePool, err := c.Info()
 	if err != nil {
 		return 0, err
@@ -159,7 +159,7 @@ func (zc *ZoneController) Info() (*Zone, error) {
 // * tpl:	A string containing the template of the ZONE. Syntax can be the usual
 //     attribute=value or XML.
 // * clusterID: The id of the cluster. If -1, the default one will be used
-func (zc *ZonesController) Create(name string, tpl *DynamicTemplate, clusterID int) (uint, error) {
+func (zc *ZonesController) Create(name string, tpl *DynamicTemplate, clusterID int) (int, error) {
 	if tpl == nil {
 		return 0, fmt.Errorf("Zone Create: nil template arg")
 	}
@@ -170,7 +170,7 @@ func (zc *ZonesController) Create(name string, tpl *DynamicTemplate, clusterID i
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Delete deletes the given zone from the pool.

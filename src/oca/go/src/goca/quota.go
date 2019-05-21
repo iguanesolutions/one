@@ -17,7 +17,7 @@
 package goca
 
 type quotas struct {
-	ID uint `xml:"ID"`
+	ID int `xml:"ID"`
 	quotasList
 }
 
@@ -29,7 +29,7 @@ type quotasList struct {
 }
 
 type datastoreQuota struct {
-	ID         string `xml:"ID"`
+	ID         int    `xml:"ID"`
 	Images     string `xml:"IMAGES"`
 	ImagesUsed string `xml:"IMAGES_USED"`
 	Size       string `xml:"SIZE"`
@@ -37,7 +37,7 @@ type datastoreQuota struct {
 }
 
 type networkQuota struct {
-	ID         string `xml:"ID"`
+	ID         int    `xml:"ID"`
 	Leases     string `xml:"LEASES"`
 	LeasesUsed string `xml:"LEASES_USED"`
 }
@@ -60,7 +60,7 @@ type vmQuota struct {
 }
 
 type imageQuota struct {
-	ID       string `xml:"ID"`
+	ID       int    `xml:"ID"`
 	RVMs     string `xml:"RVMS"`
 	RVMsUsed string `xml:"RVMS_USED"`
 }

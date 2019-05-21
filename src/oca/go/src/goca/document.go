@@ -38,7 +38,7 @@ type DocumentPool struct {
 
 // Document represents an OpenNebula Document
 type Document struct {
-	ID          uint            `xml:"ID"`
+	ID          int             `xml:"ID"`
 	UID         int             `xml:"UID"`
 	GID         int             `xml:"GID"`
 	UName       string          `xml:"UNAME"`
@@ -56,13 +56,13 @@ func (c *Controller) Documents(dType int) *DocumentsController {
 }
 
 // Document returns a Document controller
-func (c *Controller) Document(id uint) *DocumentController {
+func (c *Controller) Document(id int) *DocumentController {
 	return &DocumentController{c, id}
 }
 
 // ByName returns a Document ID from name
-func (dc *DocumentsController) ByName(name string, args ...int) (uint, error) {
-	var id uint
+func (dc *DocumentsController) ByName(name string, args ...int) (int, error) {
+	var id int
 
 	documentPool, err := dc.Info(args...)
 	if err != nil {
@@ -139,7 +139,7 @@ func (dc *DocumentController) Info() (*Document, error) {
 }
 
 // Create allocates a new document. It returns the new document ID.
-func (dc *DocumentsController) Create(name string, tpl *DynamicTemplate) (uint, error) {
+func (dc *DocumentsController) Create(name string, tpl *DynamicTemplate) (int, error) {
 	if tpl == nil {
 		return 0, fmt.Errorf("Document Create: nil template arg")
 	}
@@ -150,7 +150,7 @@ func (dc *DocumentsController) Create(name string, tpl *DynamicTemplate) (uint, 
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Clone clones an existing document.

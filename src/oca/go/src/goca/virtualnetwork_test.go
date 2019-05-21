@@ -22,7 +22,7 @@ import (
 )
 
 // Helper to create a Virtual Network
-func createVirtualNetwork(t *testing.T) (*VirtualNetwork, uint) {
+func createVirtualNetwork(t *testing.T) (*VirtualNetwork, int) {
 	vnTpl := NewVirtualNetworkTemplate()
 	vnTpl.Add(BridgeVNK, "vnetbr")
 	vnTpl.Add(PhyDevVNK, "eth0")

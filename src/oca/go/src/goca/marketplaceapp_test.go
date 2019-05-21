@@ -25,8 +25,8 @@ func TestMarketplaceApp(t *testing.T){
 	var mkt_app_name string = "new_mkt_app"
 	var mkt_app *MarketPlaceApp
 	var mkt_app_tmpl *MarketAppTemplate
-	var mkt_img_id uint
-	var market_id  uint
+	var mkt_img_id int
+	var market_id int
 	var err error
 
 	mkt_app_tmpl.Add(TypeMKA, "image")

@@ -42,7 +42,7 @@ func ImageExpectState(imageC *ImageController, state string) func() bool {
 }
 
 // Helper to create a Image
-func createImage(t *testing.T) (*Image, uint) {
+func createImage(t *testing.T) (*Image, int) {
 	imageTpl := NewImageTemplate()
 	imageTpl.Add(SizeIK, "1")
 

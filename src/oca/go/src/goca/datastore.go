@@ -35,7 +35,7 @@ type DatastorePool struct {
 
 // Datastore represents an OpenNebula Datastore
 type Datastore struct {
-	ID           uint              `xml:"ID"`
+	ID           int               `xml:"ID"`
 	UID          int               `xml:"UID"`
 	GID          int               `xml:"GID"`
 	UName        string            `xml:"UNAME"`
@@ -131,13 +131,13 @@ func (c *Controller) Datastores() *DatastoresController {
 }
 
 // Datastore returns a Datastore controller
-func (c *Controller) Datastore(id uint) *DatastoreController {
+func (c *Controller) Datastore(id int) *DatastoreController {
 	return &DatastoreController{c, id}
 }
 
 // ByName returns a Datastore ID from name
-func (c *Controller) ByName(name string) (uint, error) {
-	var id uint
+func (c *Controller) ByName(name string) (int, error) {
+	var id int
 
 	datastorePool, err := (&DatastoresController{c}).Info()
 	if err != nil {
@@ -198,7 +198,7 @@ func (dc *DatastoreController) Info() (*Datastore, error) {
 // * name: name of the datastore
 // * tpl: template of the datastore
 // * clusterID: The cluster ID. If it is -1, the default one will be used.
-func (dc *DatastoresController) Create(name string, tpl *DatastoreTemplate, clusterID int) (uint, error) {
+func (dc *DatastoresController) Create(name string, tpl *DatastoreTemplate, clusterID int) (int, error) {
 	if tpl == nil {
 		return 0, fmt.Errorf("Datastore Create: nil template arg")
 	}
@@ -209,7 +209,7 @@ func (dc *DatastoresController) Create(name string, tpl *DatastoreTemplate, clus
 		return 0, err
 	}
 
-	return uint(response.BodyInt()), nil
+	return response.BodyInt(), nil
 }
 
 // Delete deletes the given datastore from the pool.
