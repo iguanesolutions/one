@@ -87,29 +87,88 @@ func (dc *DocumentsController) ByName(name string, args ...int) (int, error) {
 	return id, nil
 }
 
+// ByName returns an Image ID from name
+func (c *ImagesController) ByName(name string, args ...int) (int, error) {
+	ids, err := c.info(
+		func(i *Image) (bool, error) {
+			return i.Name == name, nil
+		},
+		args...)
+	if err != nil {
+		return 0, err
+	}
+	if len(ids) == 0 {
+		return 0, errors.New("resource not found")
+	} else if len(ids) > 1 {
+		return 0, errors.New("multiple resources with that name")
+	}
+
+	return ids[0], nil
+}
+
+// ByState returns an Image ID from name
+func (c *DocumentsController) ByState(state ImageState, args ...int) ([]int, error) {
+	return c.info(
+		func(i *Image) (bool, error) {
+			state, err := i.State()
+			if err != nil {
+				return false, err
+			}
+			return ImageState(i.StateRaw) == state, nil
+		},
+		args...)
+}
+
+// ByType returns an Image ID from name
+func (dc *DocumentsController) ByType(itype int, args ...int) ([]int, error) {
+	return c.info(
+		func(i *Image) (bool, error) {
+			return i.Type == itype, nil
+		},
+		v)
+}
+
+// ByPair returns an Image from a template pair
+func (dc *DocumentsController) ByPair(p TemplatePair, v View) ([]int, error) {
+	return c.info(
+		func(i *Image) (bool, error) {
+			return i.Template.findPair(p), nil
+		},
+		v)
+}
+
+// info is the base function to apply by attribute matching
+func (dc *DocumentsController) info(fn func(*Document) (bool, error), args ...int) ([]int, error) {
+	var ret []int
+
+	pool, err := dc.Info(args...)
+	if err != nil {
+		return ret, err
+	}
+
+	var ok bool
+	for i := 0; i < len(pool.Documents); i++ {
+		ok, err = fn(&pool.Documents[i])
+		if !ok {
+			continue
+		}
+
+		ret = append(ret, pool.Documents[i].ID)
+	}
+
+	return ret, nil
+}
+
 // Info returns a document pool. A connection to OpenNebula is
 // performed.
 func (dc *DocumentsController) Info(args ...int) (*DocumentPool, error) {
-	var who, start, end int
 
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 1:
-		who = args[0]
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
+	v, err := NewView(args...)
+	if err != nil {
+		return nil, err
 	}
 
-	response, err := dc.c.Client.Call("one.documentpool.info", who, start, end, dc.dType)
+	response, err := dc.c.Client.Call("one.documentpool.info", v.who, v.id.start, v.id.end, dc.dType)
 	if err != nil {
 		return nil, err
 	}

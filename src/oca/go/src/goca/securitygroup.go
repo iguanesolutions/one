@@ -54,16 +54,16 @@ type SecurityGroupTemplate struct {
 	DynamicTemplate
 }
 
-type SecurityGroupTemplateKeys string
+type SecGroupTplKeys string
 
 const (
-	ProtocolSGK  SecurityGroupTemplateKeys = "PROTOCOL"
-	RuleTypeSGK  SecurityGroupTemplateKeys = "RULE_TYPE"
-	IPSGK        SecurityGroupTemplateKeys = "IP"
-	SizeSGK      SecurityGroupTemplateKeys = "SIZE"
-	RangeSGK     SecurityGroupTemplateKeys = "RANGE"
-	IcmpTypeSGK  SecurityGroupTemplateKeys = "ICMP_TYPE"
-	NetworkIDSGK SecurityGroupTemplateKeys = "NETWORK_ID"
+	ProtocolSGK  SecGroupTplKeys = "PROTOCOL"
+	RuleTypeSGK  SecGroupTplKeys = "RULE_TYPE"
+	IPSGK        SecGroupTplKeys = "IP"
+	SizeSGK      SecGroupTplKeys = "SIZE"
+	RangeSGK     SecGroupTplKeys = "RANGE"
+	IcmpTypeSGK  SecGroupTplKeys = "ICMP_TYPE"
+	NetworkIDSGK SecGroupTplKeys = "NETWORK_ID"
 )
 
 // NewSecurityGroupTemplate returns a structure dis entity to build
@@ -71,18 +71,13 @@ func NewSecurityGroupTemplate() *SecurityGroupTemplate {
 	return &SecurityGroupTemplate{}
 }
 
-// Get is a getValue for all SecurityGroupTemplate keys
-func (t *SecurityGroupTemplate) Get(key SecurityGroupTemplateKeys) (string, error) {
-	return t.GetStr(string(key))
-}
-
-// GetRules is a getValue for all SecurityGroupTemplate keys
-func (t *SecurityGroupTemplate) GetRules(key SecurityGroupTemplateKeys) (string, error) {
+// Get return the string value of a SecurityGroup template key
+func (t *SecurityGroupTemplate) Get(key SecGroupTplKeys) (string, error) {
 	return t.GetStr(string(key))
 }
 
 // Add adds a SecurityGroupTemplate key with value. NOT ALL KEYS SHOULD BE ADDED, see the documentation
-func (t *SecurityGroupTemplate) Add(key SecurityGroupTemplateKeys, value string) error {
+func (t *SecurityGroupTemplate) Add(key SecGroupTplKeys, value string) error {
 	return t.AddPair(string(key), value)
 }
 

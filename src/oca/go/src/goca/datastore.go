@@ -56,15 +56,15 @@ type Datastore struct {
 	Template     DatastoreTemplate `xml:"TEMPLATE"`
 }
 
-type DatastoreTemplateKeys string
+type DatastoreTplKeys string
 
 const (
-	DSMadDK          DatastoreTemplateKeys = "DS_MAD"
-	TMMadDK          DatastoreTemplateKeys = "TM_MAD"
-	SafeDirsDK       DatastoreTemplateKeys = "SAFE_DIRS"
-	RestrictedDirsDK DatastoreTemplateKeys = "RESTRICTED_DIRS"
-	CloneTargetDK    DatastoreTemplateKeys = "CLONE_TARGET"
-	LnTargetDK       DatastoreTemplateKeys = "LN_TARGET"
+	DSMadDK          DatastoreTplKeys = "DS_MAD"
+	TMMadDK          DatastoreTplKeys = "TM_MAD"
+	SafeDirsDK       DatastoreTplKeys = "SAFE_DIRS"
+	RestrictedDirsDK DatastoreTplKeys = "RESTRICTED_DIRS"
+	CloneTargetDK    DatastoreTplKeys = "CLONE_TARGET"
+	LnTargetDK       DatastoreTplKeys = "LN_TARGET"
 )
 
 type DatastoreTypesValues string
@@ -84,13 +84,13 @@ func NewDatastoreTemplate() *DatastoreTemplate {
 	return &DatastoreTemplate{}
 }
 
-// Get is a getValue for all DatastoreTemplate keys
-func (t *DatastoreTemplate) Get(key DatastoreTemplateKeys) (string, error) {
+// Get return the string value of a Datastore template key
+func (t *DatastoreTemplate) Get(key DatastoreTplKeys) (string, error) {
 	return t.GetStr(string(key))
 }
 
 // Add adds a DatastoreTemplate key with value. NOT ALL KEYS SHOULD BE ADDED, see the documentation
-func (t *DatastoreTemplate) Add(key DatastoreTemplateKeys, value string) error {
+func (t *DatastoreTemplate) Add(key DatastoreTplKeys, value string) error {
 	return t.AddPair(string(key), value)
 }
 

@@ -69,7 +69,7 @@ func NewMarketTemplate() *MarketTemplate {
 	return &MarketTemplate{}
 }
 
-// Get is a getValue for all MarketTemplate keys
+// Get return the string value of a Marketplace key
 func (t *MarketTemplate) Get(key MarketTemplateKeys) (string, error) {
 	return t.GetStr(string(key))
 }

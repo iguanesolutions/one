@@ -87,6 +87,37 @@ func (c *ClustersController) ByName(name string) (int, error) {
 	return id, nil
 }
 
+// ByPair returns an Image from a template pair
+func (cc *ClustersController) ByPair(p TemplatePair, v View) ([]int, error) {
+	return c.info(
+		func(i *Cluster) (bool, error) {
+			return i.TemplateDynamic.findPair(p), nil
+		},
+		v)
+}
+
+// info is the base function to apply by attribute matching
+func (cc *ClustersController) info(fn func(*Cluster) (bool, error), args ...int) ([]int, error) {
+	var ret []int
+
+	pool, err := cc.Info()
+	if err != nil {
+		return ret, err
+	}
+
+	var ok bool
+	for i := 0; i < len(pool.Clusters); i++ {
+		ok, err = fn(&pool.Clusters[i])
+		if !ok {
+			continue
+		}
+
+		ret = append(ret, pool.Clusters[i].ID)
+	}
+
+	return ret, nil
+}
+
 // Info returns a cluster pool. A connection to OpenNebula is
 // performed.
 func (cc *ClustersController) Info() (*ClusterPool, error) {
