@@ -146,61 +146,61 @@ func (ic *ImageController) Snapshot(id int) *ImageSnapshotController {
 }
 
 // ByName returns an Image ID from name
-func (c *ImagesController) ByName(name string, args ...int) (int, error) {
-	var id int
-
-	imagePool, err := c.Info(args...)
+func (ic *ImagesController) ByName(name string, v *View) (int, error) {
+	ids, err := ic.info(
+		func(d *Image) (bool, error) {
+			return d.Name == name, nil
+		},
+		v)
 	if err != nil {
 		return 0, err
 	}
+	if len(ids) == 0 {
+		return 0, errors.New("resource not found")
+	} else if len(ids) > 1 {
+		return 0, errors.New("multiple resources with that name")
+	}
 
-	match := false
-	for i := 0; i < len(imagePool.Images); i++ {
-		if imagePool.Images[i].Name != name {
+	return ids[0], nil
+}
+
+// info is the base function to apply by attribute matching
+func (ic *ImagesController) info(fn func(*Image) (bool, error), v *View) ([]int, error) {
+	var ret []int
+
+	pool, err := ic.Info(v)
+	if err != nil {
+		return ret, err
+	}
+
+	var ok bool
+	for i := 0; i < len(pool.Images); i++ {
+		ok, err = fn(&pool.Images[i])
+		if !ok {
 			continue
 		}
-		if match {
-			return 0, errors.New("multiple resources with that name")
-		}
-		id = imagePool.Images[i].ID
-		match = true
-	}
-	if !match {
-		return 0, errors.New("resource not found")
+
+		ret = append(ret, pool.Images[i].ID)
 	}
 
-	return id, nil
+	return ret, nil
 }
 
 // Info returns a new image pool. It accepts the scope of the query.
-func (ic *ImagesController) Info(args ...int) (*ImagePool, error) {
-	var who, start, end int
+func (ic *ImagesController) Info(v *View) (*ImagePool, error) {
 
-	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-	default:
-		return nil, errors.New("Wrong number of arguments")
-	}
-
-	response, err := ic.c.Client.Call("one.imagepool.info", who, start, end)
+	response, err := ic.c.Client.Call("one.imagepool.info", v.who, v.id.start, v.id.end)
 	if err != nil {
 		return nil, err
 	}
 
-	imagePool := &ImagePool{}
-	err = xml.Unmarshal([]byte(response.Body()), imagePool)
+	pool := &ImagePool{}
+	err = xml.Unmarshal([]byte(response.Body()), pool)
 	if err != nil {
 		return nil, err
 	}
 
-	return imagePool, nil
+	return pool, nil
 }
 
 // Info connects to OpenNebula and fetches the information of the Image

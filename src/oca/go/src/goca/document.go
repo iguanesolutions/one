@@ -60,40 +60,13 @@ func (c *Controller) Document(id int) *DocumentController {
 	return &DocumentController{c, id}
 }
 
-// ByName returns a Document ID from name
-func (dc *DocumentsController) ByName(name string, args ...int) (int, error) {
-	var id int
-
-	documentPool, err := dc.Info(args...)
-	if err != nil {
-		return 0, err
-	}
-
-	match := false
-	for i := 0; i < len(documentPool.Documents); i++ {
-		if documentPool.Documents[i].Name != name {
-			continue
-		}
-		if match {
-			return 0, errors.New("multiple resources with that name")
-		}
-		id = documentPool.Documents[i].ID
-		match = true
-	}
-	if !match {
-		return 0, errors.New("resource not found")
-	}
-
-	return id, nil
-}
-
 // ByName returns an Image ID from name
-func (c *ImagesController) ByName(name string, args ...int) (int, error) {
-	ids, err := c.info(
-		func(i *Image) (bool, error) {
+func (dc *DocumentsController) ByName(name string, v *View) (int, error) {
+	ids, err := dc.info(
+		func(i *Document) (bool, error) {
 			return i.Name == name, nil
 		},
-		args...)
+		v)
 	if err != nil {
 		return 0, err
 	}
@@ -106,39 +79,32 @@ func (c *ImagesController) ByName(name string, args ...int) (int, error) {
 	return ids[0], nil
 }
 
-// ByState returns an Image ID from name
-func (c *DocumentsController) ByState(state ImageState, args ...int) ([]int, error) {
+/*
+// ByState returns a list of image ID from state
+func (c *DocumentsController) ByState(state ImageState, v *View) ([]int, error) {
 	return c.info(
-		func(i *Image) (bool, error) {
+		func(i *Document) (bool, error) {
 			state, err := i.State()
 			if err != nil {
 				return false, err
 			}
 			return ImageState(i.StateRaw) == state, nil
 		},
-		args...)
-}
-
-// ByType returns an Image ID from name
-func (dc *DocumentsController) ByType(itype int, args ...int) ([]int, error) {
-	return c.info(
-		func(i *Image) (bool, error) {
-			return i.Type == itype, nil
-		},
 		v)
 }
+*/
 
 // ByPair returns an Image from a template pair
-func (dc *DocumentsController) ByPair(p TemplatePair, v View) ([]int, error) {
+func (dc *DocumentsController) ByPair(p TemplatePair, v *View) ([]int, error) {
 	return c.info(
-		func(i *Image) (bool, error) {
-			return i.Template.findPair(p), nil
+		func(d *Document) (bool, error) {
+			return d.Template.findPair(p), nil
 		},
 		v)
 }
 
 // info is the base function to apply by attribute matching
-func (dc *DocumentsController) info(fn func(*Document) (bool, error), args ...int) ([]int, error) {
+func (dc *DocumentsController) info(fn func(*Document) (bool, error), v *View) ([]int, error) {
 	var ret []int
 
 	pool, err := dc.Info(args...)
@@ -161,7 +127,7 @@ func (dc *DocumentsController) info(fn func(*Document) (bool, error), args ...in
 
 // Info returns a document pool. A connection to OpenNebula is
 // performed.
-func (dc *DocumentsController) Info(args ...int) (*DocumentPool, error) {
+func (dc *DocumentsController) Info(v *View) (*DocumentPool, error) {
 
 	v, err := NewView(args...)
 	if err != nil {
@@ -173,13 +139,13 @@ func (dc *DocumentsController) Info(args ...int) (*DocumentPool, error) {
 		return nil, err
 	}
 
-	documentPool := &DocumentPool{}
-	err = xml.Unmarshal([]byte(response.Body()), documentPool)
+	pool := &DocumentPool{}
+	err = xml.Unmarshal([]byte(response.Body()), pool)
 	if err != nil {
 		return nil, err
 	}
 
-	return documentPool, nil
+	return pool, nil
 }
 
 // Info retrieves information for the document.

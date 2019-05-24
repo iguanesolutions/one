@@ -43,6 +43,11 @@ type Cluster struct {
 	Template     clusterTemplate `xml:"TEMPLATE"`
 }
 
+/* TODO:
+xxxxx add template building abilities ?
+xxxxx integrate reserved_XXX to ByPair search ?
+xxxxx which type for reserved attributes ?
+*/
 type clusterTemplate struct {
 	// Example of reservation: https://github.com/OpenNebula/addon-storpool/blob/ba9dd3462b369440cf618c4396c266f02e50f36f/misc/reserved.sh
 	ReservedMem string             `xml:"RESERVED_MEM"`
@@ -61,10 +66,10 @@ func (c *Controller) Cluster(id int) *ClusterController {
 }
 
 // ByName returns a Cluster ID from name
-func (c *ClustersController) ByName(name string) (int, error) {
+func (cc *ClustersController) ByName(name string) (int, error) {
 	var id int
 
-	clusterPool, err := c.Info()
+	clusterPool, err := cc.Info()
 	if err != nil {
 		return 0, err
 	}
@@ -89,15 +94,15 @@ func (c *ClustersController) ByName(name string) (int, error) {
 
 // ByPair returns an Image from a template pair
 func (cc *ClustersController) ByPair(p TemplatePair, v View) ([]int, error) {
-	return c.info(
-		func(i *Cluster) (bool, error) {
-			return i.TemplateDynamic.findPair(p), nil
+	return cc.info(
+		func(c *Cluster) (bool, error) {
+			return c.Template.Dynamic.findPair(p), nil
 		},
 		v)
 }
 
 // info is the base function to apply by attribute matching
-func (cc *ClustersController) info(fn func(*Cluster) (bool, error), args ...int) ([]int, error) {
+func (cc *ClustersController) info(fn func(*Cluster) (bool, error), v View) ([]int, error) {
 	var ret []int
 
 	pool, err := cc.Info()

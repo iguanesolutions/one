@@ -152,7 +152,7 @@ func (d *VMTemplate) GetShowback(key VMShowbackKeys) (string, error) {
 
 // OS template part
 
-// VMOSKeys define keys for OS and boot values
+// VMOSKeys define keys for OS and boot values of the VM
 type VMOSKeys string
 
 const (
@@ -178,27 +178,31 @@ func (d *VMTemplate) GetOS(key VMOSKeys) (string, error) {
 
 // CPU model part
 
+// VMCPUModelKeys define keys for the VM CPU model
 type VMCPUModelKeys string
 
 const (
 	ModelVMK VMCPUModelKeys = "MODEL"
 )
 
-// There is only one key defined for the CPU_MODEL vector, so we just define a GetStr and a setter for it
-func (d *VMTemplate) AddCPUModel(value string) error {
+// SetCPUModel set the model of the CPU
+func (d *VMTemplate) SetCPUModel(value string) error {
+	d.Dynamic.Del(string(vmCPUModelVecK))
 	return d.Dynamic.addPairToVec(vmCPUModelVecK, string(ModelVMK), value)
 }
 
+// GetCPUModel get the model of the CPU
 func (d *VMTemplate) GetCPUModel(key VMCPUModelKeys) (string, error) {
-	cpuMod, err := d.Dynamic.GetVector(string(vmCPUModelVecK))
+	cpuModVec, err := d.Dynamic.GetVector(string(vmCPUModelVecK))
 	if err != nil {
 		return "", fmt.Errorf("VMTemplate.GetCPUModel: vector %s: %s", vmCPUModelVecK, err)
 	}
-	return cpuMod.GetStr(string(key))
+	return cpuModVec.GetStr(string(key))
 }
 
 // Features template part
 
+// VMFeatureKeys define keys for the VM features
 type VMFeatureKeys string
 
 const (

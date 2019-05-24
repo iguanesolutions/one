@@ -66,19 +66,19 @@ type ViewRangeID struct {
 func NewViewWho(who int, args ...int) (View, error) {
 	var f View
 
-	if f.who < int(PoolWhoPrimaryGroup) {
+	if v.who < int(PoolWhoPrimaryGroup) {
 		return f, fmt.Errorf("bad Who value")
 	}
 
-	f.who = who
+	v.who = who
 
 	switch len(args) {
 	case 0:
-		f.id = ViewRangeID{-1, -1}
+		v.id = ViewRangeID{-1, -1}
 	case 1:
 		return f, errors.New("Wrong number of arguments: end of range is missing")
 	case 2:
-		f.id = ViewRangeID{args[0], args[1]}
+		v.id = ViewRangeID{args[0], args[1]}
 	default:
 		return f, errors.New("Wrong number of arguments: too much arguments")
 	}
@@ -87,7 +87,7 @@ func NewViewWho(who int, args ...int) (View, error) {
 }
 
 // NewView is a function returning a View from a list of variable parameters
-func NewView(args ...int) (View, error) {
+func NewView(args ...int) (*View, error) {
 	if len(args) > 1 {
 		return NewViewWho(args[0], args...)
 	}
@@ -101,11 +101,11 @@ func NewView(args ...int) (View, error) {
 
 // SetUID enable filtering on a user ID filter.
 // You have to choose between SetUID and SetVisibility methods.
-func (f *View) SetUID(uid int) error {
+func (v *View) SetUID(uid int) error {
 	if uid < 0 {
 		return fmt.Errorf("View.SetUID: parameters uid must be positive")
 	}
-	f.who = uid
+	v.who = uid
 	return nil
 }
 
@@ -117,26 +117,7 @@ func (f *View) SetVisibility(flag PoolWho) error {
 	default:
 		return fmt.Errorf("View.SetVisibility: bad parameter value, should be one of PoolWho values")
 	}
-	f.who = int(flag)
+	v.who = int(flag)
 
 	return nil
-}
-
-func argsToInt(length int, args ...interface{}) ([]int, error) {
-
-	min := length
-	if len(args) < length {
-		min = len(args)
-	}
-
-	argsI := make([]int, 0, min)
-	for i := 0; i < min; i++ {
-		argI, ok := args[i].(int)
-		if !ok {
-			return argsI, fmt.Errorf("wrong type, needs an int")
-		}
-		argsI = append(argsI, argI)
-	}
-
-	return argsI, nil
 }

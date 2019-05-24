@@ -117,64 +117,98 @@ func (vc *VMController) Disk(id int) *VMDiskController {
 }
 
 // ByName returns VM ID from name
-func (c *VMsController) ByName(name string, args ...int) (int, error) {
-	var id int
-
-	vmPool, err := c.Info(args...)
+//xxxxxx args is here because the info method cant filter by name ..... so it become the user stuff to filter by name ?
+//xxxxxx the full args... argument passing (ie without View) remains the simplest way to do, but is less clear ?
+func (vc *VMsController) ByName(name string, v *View, args...) (int, error) {
+	ids, err := dc.info(
+		func(i *VM) (bool, error) {
+			return i.Name == name, nil
+		},
+		v)
 	if err != nil {
 		return 0, err
 	}
+	if len(ids) == 0 {
+		return 0, errors.New("resource not found")
+	} else if len(ids) > 1 {
+		return 0, errors.New("multiple resources with that name")
+	}
 
-	match := false
-	for i := 0; i < len(vmPool.VMs); i++ {
-		if vmPool.VMs[i].Name != name {
+	return ids[0], nil
+}
+
+// ByState returns a list of vm ID from state
+func (c *VMsController) ByState(state ImageState, v *View) ([]int, error) {
+	return c.info(
+		func(v *VM) (bool, error) {
+			return true, nil
+		},
+		v, state)
+}
+
+// ByPair returns a list of vm ID from a template pair
+func (dc *VMsController) ByPair(p TemplatePair, v *View) ([]int, error) {
+	return c.info(
+		func(d *VM) (bool, error) {
+			return d.Template.findPair(p), nil
+		},
+		v, -1, p)
+}
+
+// info is the base function to apply attribute matching
+func (ic *VMsController) info(fn func(*VM) (bool, error), v *View, args ...interface{}) ([]int, error) {
+	var ret []int
+
+	pool, err := ic.Info(v, args...)
+	if err != nil {
+		return ret, err
+	}
+
+	var ok bool
+	for i := 0; i < len(pool.Images); i++ {
+		ok, err = fn(&pool.Images[i])
+		if !ok {
 			continue
 		}
-		if match {
-			return 0, errors.New("multiple resources with that name")
-		}
-		id = vmPool.VMs[i].ID
-		match = true
-	}
-	if !match {
-		return 0, errors.New("resource not found")
+
+		ret = append(ret, pool.Images[i].ID)
 	}
 
-	return id, err
+	return ret, nil
 }
 
 // Info returns a new VM pool. It accepts the scope of the query.
-func (vc *VMsController) Info(args ...int) (*VMPool, error) {
-	var who, start, end, state int
+func (vc *VMsController) Info(v *View, args ...interface{}) (*VMPool, error) {
+	var response Response
+	var err error
 
 	switch len(args) {
-	case 0:
-		who = PoolWhoMine
-		start = -1
-		end = -1
-		state = -1
 	case 1:
-		who = args[0]
-		start = -1
-		end = -1
-		state = -1
-	case 3:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-		state = -1
-	case 4:
-		who = args[0]
-		start = args[1]
-		end = args[2]
-		state = args[3]
+		state, ok := args[0].(int)
+		if !ok {
+			return nil, fmt.Errorf("VMs Info: bad type, state has to be an integer")
+		}
+
+		response, err = vc.c.Client.Call("one.vmpool.info", who, start, end, state)
+		if err != nil {
+			return nil, err
+		}
+	case 2:
+		state, ok := args[0].(int)
+		if !ok {
+			return nil, fmt.Errorf("VMs Info: bad type, state has to be an integer")
+		}
+		pair, ok := args[1].(TemplatePair)
+		if !ok {
+			return nil, fmt.Errorf("VMs Info: bad type, the pair has to be a TemplatePair")
+		}
+
+		response, err = vc.c.Client.Call("one.vmpool.info", who, start, end, state, pair)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, errors.New("Wrong number of arguments")
-	}
-
-	response, err := vc.c.Client.Call("one.vmpool.info", who, start, end, state)
-	if err != nil {
-		return nil, err
 	}
 
 	vmPool := &VMPool{}
