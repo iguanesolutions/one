@@ -134,6 +134,50 @@ func (vc *VMsController) InfoExtended(filterFlag, startID, endID, state int) (*v
 	return vmPool, nil
 }
 
+// InfoFilter returns a new VM pool. It accepts the scope of the query.
+func (vc *VMsController) InfoFilter(options ...filterOption) (*vm.Pool, error) {
+
+	f := newVMFilterDefault()
+
+	for _, opt := range options {
+		opt(f)
+	}
+
+	response, err := vc.c.Client.Call("one.vmpool.info", f.toVMArgs()...)
+	if err != nil {
+		return nil, err
+	}
+
+	vmPool := &vm.Pool{}
+	err = xml.Unmarshal([]byte(response.Body()), vmPool)
+	if err != nil {
+		return nil, err
+	}
+
+	return vmPool, nil
+}
+
+// InfoExtendedFilter connects to OpenNebula and fetches the whole VM_POOL information
+func (vc *VMsController) InfoExtendedFilter(options ...filterOption) (*vm.Pool, error) {
+
+	f := newVMFilterDefault()
+
+	for _, opt := range options {
+		opt(f)
+	}
+
+	response, err := vc.c.Client.Call("one.vmpool.info", f.toArgs())
+	if err != nil {
+		return nil, err
+	}
+	vmPool := &vm.Pool{}
+	err = xml.Unmarshal([]byte(response.Body()), vmPool)
+	if err != nil {
+		return nil, err
+	}
+	return vmPool, nil
+}
+
 // Info connects to OpenNebula and fetches the information of the VM
 func (vc *VMController) Info(decrypt bool) (*vm.VM, error) {
 	response, err := vc.c.Client.Call("one.vm.info", vc.ID, decrypt)
